@@ -1,0 +1,25 @@
+// Инициализация Telegram Web App
+let tg = window.Telegram.WebApp;
+
+// Показываем основную кнопку
+tg.expand();
+tg.MainButton.setText("Готово").show();
+
+// Функция при нажатии на кнопку
+function sendMessage() {
+    document.getElementById('result').innerHTML = 
+        "🎉 Ура! Ты нажал на кнопку! " + 
+        "<br><br>" +
+        "Твой ID: " + tg.initDataUnsafe.user.id;
+    
+    // Можно отправить данные обратно в бота
+    tg.sendData(JSON.stringify({
+        action: "button_clicked",
+        timestamp: new Date().toISOString()
+    }));
+}
+
+// Обработчик нажатия на основную кнопку
+tg.MainButton.onClick(function() {
+    tg.close();
+});
