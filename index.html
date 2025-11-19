@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Sofia+Sans:ital,wght@0,1..1000;1,1..1000&display=swap');
+    </style>
     <title>Меню ресторана</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -12,7 +15,7 @@
         <!-- ШАПКА -->
         <header class="header">
             <div class="header-content">
-                <h1 class="restaurant-name">🍕 Пиццерия "У Итальянца"</h1>
+                <h1 class="restaurant-name">🍕 гастропаб "БУНКЕР"</h1>
                 <div class="header-actions">
                     <button class="cart-btn" id="cartBtn">
                         🛒 <span class="cart-count">0</span>
@@ -20,6 +23,11 @@
                 </div>
             </div>
         </header>
+
+        <!-- ПОИСК -->
+        <div class="search-container">
+            <input type="text" class="search-input" id="searchInput" placeholder="🔍 Поиск по меню...">
+        </div>
 
         <!-- КАТЕГОРИИ МЕНЮ -->
         <nav class="categories" id="categories">
@@ -47,6 +55,9 @@
                 <button class="order-btn" id="orderBtn">Оформить заказ</button>
             </div>
         </div>
+
+        <!-- TOAST УВЕДОМЛЕНИЯ -->
+        <div class="toast-container" id="toastContainer"></div>
     </div>
 
     <script src="data.js"></script>

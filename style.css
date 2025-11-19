@@ -6,10 +6,10 @@
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont,'Sofia Sans','Segoe UI', Roboto, sans-serif;
     background: #ffffff;
-    color: #1a1a1a;
-    line-height: 1.4;
+    color: #455017;
+    line-height: 1.6;
 }
 
 .app {
@@ -19,8 +19,8 @@ body {
 
 /* ШАПКА */
 .header {
-    background: linear-gradient(135deg, #ff6b6b, #ee5a24);
-    color: white;
+    background: linear-gradient(135deg, #aa1717, #242418);
+    color: rgb(17, 4, 4);
     padding: 15px;
     position: sticky;
     top: 0;
@@ -34,8 +34,8 @@ body {
 }
 
 .restaurant-name {
-    font-size: 18px;
-    font-weight: 600;
+    font-size: 24px;
+    font-weight: 800;
 }
 
 .cart-btn {
@@ -46,6 +46,33 @@ body {
     border-radius: 20px;
     cursor: pointer;
     font-size: 16px;
+    transition: transform 0.2s, background 0.2s;
+}
+
+.cart-btn:active {
+    transform: scale(0.95);
+}
+
+/* ПОИСК */
+.search-container {
+    padding: 15px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.search-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e9ecef;
+    border-radius: 25px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.search-input:focus {
+    border-color: #4ecdc4;
+    box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.1);
 }
 
 /* КАТЕГОРИИ */
@@ -105,6 +132,23 @@ body {
     display: flex;
     gap: 12px;
     align-items: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+    animation: fadeIn 0.3s ease;
+}
+
+.menu-item:active {
+    transform: scale(0.98);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .item-image {
@@ -160,11 +204,17 @@ body {
     padding: 8px 16px;
     cursor: pointer;
     font-weight: 600;
-    transition: background 0.3s;
+    transition: all 0.2s;
+    min-width: 40px;
 }
 
 .add-btn:hover {
     background: #45b7af;
+}
+
+.add-btn:active {
+    transform: scale(0.9);
+    background: #3da39a;
 }
 
 /* КОРЗИНА */
@@ -179,6 +229,26 @@ body {
     z-index: 1000;
     display: flex;
     flex-direction: column;
+    box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+}
+
+.cart-sidebar::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.3);
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.cart-sidebar.open::before {
+    opacity: 1;
+    pointer-events: all;
 }
 
 .cart-sidebar.open {
@@ -229,9 +299,19 @@ body {
     color: white;
     border: none;
     border-radius: 50%;
-    width: 25px;
-    height: 25px;
+    width: 30px;
+    height: 30px;
     cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.quantity-btn:active {
+    transform: scale(0.9);
+    background: #3da39a;
 }
 
 .cart-footer {
@@ -256,4 +336,59 @@ body {
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
+    transition: all 0.2s;
+}
+
+.order-btn:hover {
+    background: #45b7af;
+}
+
+.order-btn:active {
+    transform: scale(0.98);
+    background: #3da39a;
+}
+
+/* TOAST УВЕДОМЛЕНИЯ */
+.toast-container {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+}
+
+.toast {
+    background: #2d3436;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 25px;
+    font-size: 14px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: all 0.3s ease;
+    pointer-events: auto;
+    max-width: 90vw;
+    text-align: center;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.toast-success {
+    background: #00b894;
+}
+
+.toast-error {
+    background: #d63031;
+}
+
+.toast-info {
+    background: #0984e3;
 }

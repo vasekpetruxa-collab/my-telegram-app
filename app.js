@@ -1,16 +1,73 @@
 // Telegram Web App инициализация
-let tg = window.Telegram.WebApp;
-tg.expand();
-tg.MainButton.setText("Оформить заказ").hide();
+let tg = null;
+
+// Проверка наличия Telegram WebApp API
+if (window.Telegram && window.Telegram.WebApp) {
+    tg = window.Telegram.WebApp;
+    tg.expand();
+    tg.MainButton.setText("Оформить заказ").hide();
+} else {
+    console.warn('Telegram WebApp API не найден. Приложение работает в режиме разработки.');
+    // Создаем заглушку для разработки
+    tg = {
+        expand: () => {},
+        MainButton: {
+            setText: () => {},
+            show: () => {},
+            hide: () => {},
+            onClick: () => {}
+        },
+        showPopup: (options) => {
+            alert(options.title + '\n' + options.message);
+        },
+        sendData: (data) => {
+            console.log('Отправка данных:', data);
+        },
+        initDataUnsafe: {
+            user: {
+                id: 0,
+                first_name: 'Тестовый',
+                last_name: 'Пользователь'
+            }
+        }
+    };
+}
 
 // Состояние приложения
 let state = {
     cart: [],
-    currentCategory: null
+    currentCategory: null,
+    searchQuery: ''
 };
+
+// КЛЮЧ ДЛЯ LOCALSTORAGE
+const CART_STORAGE_KEY = 'telegram_app_cart';
+
+// СОХРАНЕНИЕ КОРЗИНЫ В LOCALSTORAGE
+function saveCartToStorage() {
+    try {
+        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(state.cart));
+    } catch (e) {
+        console.error('Ошибка сохранения корзины:', e);
+    }
+}
+
+// ЗАГРУЗКА КОРЗИНЫ ИЗ LOCALSTORAGE
+function loadCartFromStorage() {
+    try {
+        const savedCart = localStorage.getItem(CART_STORAGE_KEY);
+        if (savedCart) {
+            state.cart = JSON.parse(savedCart);
+        }
+    } catch (e) {
+        console.error('Ошибка загрузки корзины:', e);
+        state.cart = [];
+    }
+}
 
 // ИНИЦИАЛИЗАЦИЯ ПРИЛОЖЕНИЯ
 function initApp() {
+    loadCartFromStorage(); // Загружаем корзину из localStorage
     renderCategories();
     renderMenuItems();
     setupEventListeners();
@@ -40,10 +97,19 @@ function renderMenuItems() {
     const menuContainer = document.getElementById('menuContainer');
     menuContainer.innerHTML = '';
     
-    // Фильтруем блюда по категории
-    const itemsToShow = state.currentCategory 
+    // Фильтруем блюда по категории и поисковому запросу
+    let itemsToShow = state.currentCategory 
         ? menuData.items.filter(item => item.category === state.currentCategory)
         : menuData.items;
+    
+    // Применяем поиск
+    if (state.searchQuery.trim()) {
+        const query = state.searchQuery.toLowerCase().trim();
+        itemsToShow = itemsToShow.filter(item => 
+            item.name.toLowerCase().includes(query) ||
+            item.description.toLowerCase().includes(query)
+        );
+    }
     
     // Группируем по категориям
     const categories = state.currentCategory 
@@ -74,6 +140,20 @@ function renderMenuItems() {
             menuContainer.appendChild(section);
         }
     });
+    
+    // Показываем сообщение, если ничего не найдено
+    if (itemsToShow.length === 0 && state.searchQuery.trim()) {
+        const emptyMessage = document.createElement('div');
+        emptyMessage.className = 'empty-message';
+        emptyMessage.innerHTML = `
+            <div style="text-align: center; padding: 40px 20px; color: #6c757d;">
+                <div style="font-size: 48px; margin-bottom: 15px;">🔍</div>
+                <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">Ничего не найдено</div>
+                <div style="font-size: 14px;">Попробуйте изменить поисковый запрос</div>
+            </div>
+        `;
+        menuContainer.appendChild(emptyMessage);
+    }
 }
 
 // СОЗДАНИЕ КАРТОЧКИ БЛЮДА
@@ -115,6 +195,7 @@ function addToCart(itemId) {
         });
     }
     
+    saveCartToStorage(); // Сохраняем корзину
     updateCartUI();
     showNotification(`Добавлено: ${item.name}`);
 }
@@ -127,6 +208,7 @@ function updateCartQuantity(itemId, change) {
         if (item.quantity <= 0) {
             removeFromCart(itemId);
         } else {
+            saveCartToStorage(); // Сохраняем корзину
             updateCartUI();
         }
     }
@@ -135,6 +217,7 @@ function updateCartQuantity(itemId, change) {
 // КОРЗИНА: УДАЛЕНИЕ ТОВАРА
 function removeFromCart(itemId) {
     state.cart = state.cart.filter(item => item.id !== itemId);
+    saveCartToStorage(); // Сохраняем корзину
     updateCartUI();
 }
 
@@ -170,24 +253,44 @@ function updateCartUI() {
     document.getElementById('totalAmount').textContent = totalAmount;
     
     // Управляем кнопкой оформления заказа
-    if (totalAmount > 0) {
-        tg.MainButton.show();
-    } else {
-        tg.MainButton.hide();
+    if (tg && tg.MainButton) {
+        if (totalAmount > 0) {
+            tg.MainButton.show();
+        } else {
+            tg.MainButton.hide();
+        }
     }
 }
 
-// УВЕДОМЛЕНИЯ
-function showNotification(message) {
-    tg.showPopup({
-        title: 'Уведомление',
-        message: message,
-        buttons: [{ type: 'ok' }]
-    });
+// УВЕДОМЛЕНИЯ (TOAST)
+function showNotification(message, type = 'success') {
+    // Показываем toast уведомление
+    const toastContainer = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    
+    toastContainer.appendChild(toast);
+    
+    // Анимация появления
+    setTimeout(() => toast.classList.add('show'), 10);
+    
+    // Удаляем через 3 секунды
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
 }
 
 // НАСТРОЙКА ОБРАБОТЧИКОВ СОБЫТИЙ
 function setupEventListeners() {
+    // Поиск по меню
+    const searchInput = document.getElementById('searchInput');
+    searchInput.addEventListener('input', (e) => {
+        state.searchQuery = e.target.value;
+        renderMenuItems();
+    });
+    
     // Открытие корзины
     document.getElementById('cartBtn').onclick = () => {
         document.getElementById('cartSidebar').classList.add('open');
@@ -198,29 +301,58 @@ function setupEventListeners() {
         document.getElementById('cartSidebar').classList.remove('open');
     };
     
-    // Оформление заказа
-    tg.MainButton.onClick(() => {
-        const orderData = {
-            items: state.cart,
-            total: state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-            user: tg.initDataUnsafe.user,
-            timestamp: new Date().toISOString()
-        };
-        
-        // Отправляем данные в бота
-        tg.sendData(JSON.stringify(orderData));
-        
-        tg.showPopup({
-            title: 'Заказ оформлен!',
-            message: `Спасибо! Ваш заказ на ${orderData.total} ₽ принят.`,
-            buttons: [{ type: 'ok' }]
-        });
-        
-        // Очищаем корзину
-        state.cart = [];
-        updateCartUI();
-        document.getElementById('cartSidebar').classList.remove('open');
+    // Закрытие корзины по клику на фон
+    document.getElementById('cartSidebar').addEventListener('click', (e) => {
+        if (e.target.id === 'cartSidebar') {
+            document.getElementById('cartSidebar').classList.remove('open');
+        }
     });
+    
+    // Оформление заказа
+    if (tg && tg.MainButton) {
+        tg.MainButton.onClick(() => {
+            try {
+                const orderData = {
+                    items: state.cart,
+                    total: state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+                    user: tg.initDataUnsafe?.user || null,
+                    timestamp: new Date().toISOString()
+                };
+                
+                // Проверяем, что корзина не пуста
+                if (orderData.items.length === 0) {
+                    showNotification('Корзина пуста. Добавьте товары в корзину.', 'error');
+                    return;
+                }
+                
+                // Отправляем данные в бота
+                if (tg.sendData) {
+                    tg.sendData(JSON.stringify(orderData));
+                }
+                
+                // Показываем уведомление об успешном заказе
+                showNotification(`Заказ оформлен! Сумма: ${orderData.total} ₽`, 'success');
+                
+                // Также показываем popup в Telegram, если доступен
+                if (tg && tg.showPopup) {
+                    tg.showPopup({
+                        title: 'Заказ оформлен!',
+                        message: `Спасибо! Ваш заказ на ${orderData.total} ₽ принят.`,
+                        buttons: [{ type: 'ok' }]
+                    });
+                }
+                
+                // Очищаем корзину
+                state.cart = [];
+                saveCartToStorage(); // Сохраняем пустую корзину
+                updateCartUI();
+                document.getElementById('cartSidebar').classList.remove('open');
+            } catch (error) {
+                console.error('Ошибка при оформлении заказа:', error);
+                showNotification('Произошла ошибка при оформлении заказа. Попробуйте еще раз.', 'error');
+            }
+        });
+    }
 }
 
 // ЗАПУСК ПРИЛОЖЕНИЯ
