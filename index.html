@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Меню ресторана</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app">
+        <!-- ШАПКА -->
+        <header class="header">
+            <div class="header-content">
+                <h1 class="restaurant-name">🍕 Пиццерия "У Итальянца"</h1>
+                <div class="header-actions">
+                    <button class="cart-btn" id="cartBtn">
+                        🛒 <span class="cart-count">0</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- КАТЕГОРИИ МЕНЮ -->
+        <nav class="categories" id="categories">
+            <!-- категории загрузятся из JS -->
+        </nav>
+
+        <!-- СПИСОК БЛЮД -->
+        <main class="menu-container" id="menuContainer">
+            <!-- блюда загрузятся из JS -->
+        </main>
+
+        <!-- КОРЗИНА -->
+        <div class="cart-sidebar" id="cartSidebar">
+            <div class="cart-header">
+                <h2>Ваш заказ</h2>
+                <button class="close-cart" id="closeCart">✕</button>
+            </div>
+            <div class="cart-items" id="cartItems">
+                <!-- товары в корзине -->
+            </div>
+            <div class="cart-footer">
+                <div class="cart-total">
+                    Итого: <span id="totalAmount">0</span> ₽
+                </div>
+                <button class="order-btn" id="orderBtn">Оформить заказ</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
