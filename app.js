@@ -40,6 +40,40 @@ let state = {
     searchQuery: ''
 };
 
+function getCartItemQuantity(itemId) {
+    const item = state.cart.find(cartItem => cartItem.id === itemId);
+    return item ? item.quantity : 0;
+}
+
+function getItemControlsMarkup(itemId, quantity) {
+    if (quantity > 0) {
+        return `
+            <div class="item-quantity-controls">
+                <div class="quantity-btn" role="button" tabindex="0" onclick="updateCartQuantity(${itemId}, -1)">-</div>
+                <span class="item-quantity">${quantity}</span>
+                <div class="quantity-btn" role="button" tabindex="0" onclick="updateCartQuantity(${itemId}, 1)">+</div>
+            </div>
+        `;
+    }
+    
+    return `
+        <button class="add-btn" onclick="addToCart(${itemId})">
+            +
+        </button>
+    `;
+}
+
+function refreshMenuItemControls(itemId) {
+    const itemElement = document.querySelector(`.menu-item[data-item-id="${itemId}"]`);
+    if (!itemElement) return;
+    
+    const controlsContainer = itemElement.querySelector('.item-actions');
+    if (!controlsContainer) return;
+    
+    const quantity = getCartItemQuantity(itemId);
+    controlsContainer.innerHTML = getItemControlsMarkup(itemId, quantity);
+}
+
 // КЛЮЧ ДЛЯ LOCALSTORAGE
 const CART_STORAGE_KEY = 'telegram_app_cart';
 
@@ -160,9 +194,18 @@ function renderMenuItems() {
 function createMenuItem(item) {
     const itemElement = document.createElement('div');
     itemElement.className = 'menu-item';
+    itemElement.dataset.itemId = item.id;
+    const categoryImage = menuData.categories.find(cat => cat.id === item.category)?.image;
+    const hasCustomImage = typeof item.image === 'string' && /[./]/.test(item.image);
+    const itemImageSrc = hasCustomImage
+        ? item.image
+        : (categoryImage || './assets/images/categories/placeholder.jpg');
+    const quantity = getCartItemQuantity(item.id);
     
     itemElement.innerHTML = `
-        <div class="item-image">${item.image}</div>
+        <div class="item-image">
+            <img src="${itemImageSrc}" alt="${item.name}" loading="lazy">
+        </div>
         <div class="item-info">
             <div class="item-name">${item.name}</div>
             <div class="item-description">${item.description}</div>
@@ -171,9 +214,9 @@ function createMenuItem(item) {
                 <div class="item-weight">${item.weight || item.volume || ''}</div>
             </div>
         </div>
-        <button class="add-btn" onclick="addToCart(${item.id})">
-            +
-        </button>
+        <div class="item-actions">
+            ${getItemControlsMarkup(item.id, quantity)}
+        </div>
     `;
     
     return itemElement;
@@ -197,6 +240,7 @@ function addToCart(itemId) {
     
     saveCartToStorage(); // Сохраняем корзину
     updateCartUI();
+    refreshMenuItemControls(itemId);
     showNotification(`Добавлено: ${item.name}`);
 }
 
@@ -210,6 +254,7 @@ function updateCartQuantity(itemId, change) {
         } else {
             saveCartToStorage(); // Сохраняем корзину
             updateCartUI();
+            refreshMenuItemControls(itemId);
         }
     }
 }
@@ -219,6 +264,7 @@ function removeFromCart(itemId) {
     state.cart = state.cart.filter(item => item.id !== itemId);
     saveCartToStorage(); // Сохраняем корзину
     updateCartUI();
+    refreshMenuItemControls(itemId);
 }
 
 // ОБНОВЛЕНИЕ ИНТЕРФЕЙСА КОРЗИНЫ
