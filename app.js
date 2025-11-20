@@ -37,41 +37,15 @@ if (window.Telegram && window.Telegram.WebApp) {
 let state = {
     cart: [],
     currentCategory: null,
-    searchQuery: ''
+    searchQuery: '',
+    modalItemId: null,
+    modalQuantity: 1,
+    cutleryCount: 0
 };
 
 function getCartItemQuantity(itemId) {
     const item = state.cart.find(cartItem => cartItem.id === itemId);
     return item ? item.quantity : 0;
-}
-
-function getItemControlsMarkup(itemId, quantity) {
-    if (quantity > 0) {
-        return `
-            <div class="item-quantity-controls">
-                <div class="quantity-btn" role="button" tabindex="0" onclick="updateCartQuantity(${itemId}, -1)">-</div>
-                <span class="item-quantity">${quantity}</span>
-                <div class="quantity-btn" role="button" tabindex="0" onclick="updateCartQuantity(${itemId}, 1)">+</div>
-            </div>
-        `;
-    }
-    
-    return `
-        <button class="add-btn" onclick="addToCart(${itemId})">
-            +
-        </button>
-    `;
-}
-
-function refreshMenuItemControls(itemId) {
-    const itemElement = document.querySelector(`.menu-item[data-item-id="${itemId}"]`);
-    if (!itemElement) return;
-    
-    const controlsContainer = itemElement.querySelector('.item-actions');
-    if (!controlsContainer) return;
-    
-    const quantity = getCartItemQuantity(itemId);
-    controlsContainer.innerHTML = getItemControlsMarkup(itemId, quantity);
 }
 
 // КЛЮЧ ДЛЯ LOCALSTORAGE
@@ -163,7 +137,7 @@ function renderMenuItems() {
             section.appendChild(title);
             
             const itemsGrid = document.createElement('div');
-            itemsGrid.className = 'menu-items';
+            itemsGrid.className = state.currentCategory ? 'menu-items category-grid' : 'menu-items';
             
             categoryItems.forEach(item => {
                 const itemElement = createMenuItem(item);
@@ -193,14 +167,14 @@ function renderMenuItems() {
 // СОЗДАНИЕ КАРТОЧКИ БЛЮДА
 function createMenuItem(item) {
     const itemElement = document.createElement('div');
-    itemElement.className = 'menu-item';
+    const isCategoryView = Boolean(state.currentCategory);
+    itemElement.className = `menu-item ${isCategoryView ? 'compact' : ''}`;
     itemElement.dataset.itemId = item.id;
     const categoryImage = menuData.categories.find(cat => cat.id === item.category)?.image;
     const hasCustomImage = typeof item.image === 'string' && /[./]/.test(item.image);
     const itemImageSrc = hasCustomImage
         ? item.image
         : (categoryImage || './assets/images/categories/placeholder.jpg');
-    const quantity = getCartItemQuantity(item.id);
     
     itemElement.innerHTML = `
         <div class="item-image">
@@ -215,33 +189,45 @@ function createMenuItem(item) {
             </div>
         </div>
         <div class="item-actions">
-            ${getItemControlsMarkup(item.id, quantity)}
+            <button class="add-btn" type="button">+</button>
         </div>
     `;
+    
+    itemElement.addEventListener('click', () => openItemModal(item.id));
+    const actionButton = itemElement.querySelector('.add-btn');
+    if (actionButton) {
+        actionButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openItemModal(item.id);
+        });
+    }
     
     return itemElement;
 }
 
 // КОРЗИНА: ДОБАВЛЕНИЕ ТОВАРА
-function addToCart(itemId) {
+function addItemToCart(itemId, quantity = 1) {
     const item = menuData.items.find(i => i.id === itemId);
-    if (!item) return;
+    if (!item || quantity <= 0) return;
     
     const existingItem = state.cart.find(cartItem => cartItem.id === itemId);
     
     if (existingItem) {
-        existingItem.quantity += 1;
+        existingItem.quantity += quantity;
     } else {
         state.cart.push({
             ...item,
-            quantity: 1
+            quantity
         });
     }
     
     saveCartToStorage(); // Сохраняем корзину
     updateCartUI();
-    refreshMenuItemControls(itemId);
     showNotification(`Добавлено: ${item.name}`);
+}
+
+function addToCart(itemId) {
+    addItemToCart(itemId, 1);
 }
 
 // КОРЗИНА: ИЗМЕНЕНИЕ КОЛИЧЕСТВА
@@ -254,7 +240,6 @@ function updateCartQuantity(itemId, change) {
         } else {
             saveCartToStorage(); // Сохраняем корзину
             updateCartUI();
-            refreshMenuItemControls(itemId);
         }
     }
 }
@@ -264,7 +249,6 @@ function removeFromCart(itemId) {
     state.cart = state.cart.filter(item => item.id !== itemId);
     saveCartToStorage(); // Сохраняем корзину
     updateCartUI();
-    refreshMenuItemControls(itemId);
 }
 
 // ОБНОВЛЕНИЕ ИНТЕРФЕЙСА КОРЗИНЫ
@@ -328,7 +312,122 @@ function showNotification(message, type = 'success') {
     }, 3000);
 }
 
+// МОДАЛЬНОЕ ОКНО БЛЮДА
+function openItemModal(itemId) {
+    const item = menuData.items.find(i => i.id === itemId);
+    if (!item) return;
+    
+    state.modalItemId = itemId;
+    state.modalQuantity = getCartItemQuantity(itemId) || 1;
+    
+    const categoryImage = menuData.categories.find(cat => cat.id === item.category)?.image;
+    const hasCustomImage = typeof item.image === 'string' && /[./]/.test(item.image);
+    const itemImageSrc = hasCustomImage
+        ? item.image
+        : (categoryImage || './assets/images/categories/placeholder.jpg');
+    
+    document.getElementById('modalItemImage').src = itemImageSrc;
+    document.getElementById('modalItemImage').alt = item.name;
+    document.getElementById('modalItemName').textContent = item.name;
+    document.getElementById('modalItemDescription').textContent = item.description;
+    document.getElementById('modalItemWeight').textContent = item.weight || item.volume || '';
+    document.getElementById('modalItemPrice').textContent = `${item.price} ₽`;
+    document.getElementById('modalQuantity').textContent = state.modalQuantity;
+    
+    const modal = document.getElementById('itemModal');
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+}
+
+function closeItemModal() {
+    const modal = document.getElementById('itemModal');
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden', 'true');
+    state.modalItemId = null;
+    state.modalQuantity = 1;
+}
+
+function updateModalQuantity(change) {
+    const nextValue = state.modalQuantity + change;
+    if (nextValue < 1) return;
+    state.modalQuantity = nextValue;
+    document.getElementById('modalQuantity').textContent = state.modalQuantity;
+}
+
+function addModalItemToCart() {
+    if (!state.modalItemId) return;
+    addItemToCart(state.modalItemId, state.modalQuantity);
+    closeItemModal();
+}
+
 // НАСТРОЙКА ОБРАБОТЧИКОВ СОБЫТИЙ
+function updateCutlery(change) {
+    const nextValue = Math.max(0, state.cutleryCount + change);
+    state.cutleryCount = nextValue;
+    document.getElementById('cutleryCount').textContent = nextValue;
+}
+
+function requestPhoneNumber() {
+    if (tg && tg.requestContact) {
+        tg.requestContact((response) => {
+            if (response?.phone_number) {
+                document.getElementById('customerPhone').value = response.phone_number;
+            }
+        });
+    } else {
+        showNotification('Запрос номера не поддерживается в режиме разработки.', 'info');
+    }
+}
+
+function gatherOrderData() {
+    return {
+        items: state.cart,
+        total: state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+        user: tg?.initDataUnsafe?.user || null,
+        timestamp: new Date().toISOString(),
+        cutlery: state.cutleryCount,
+        paymentMethod: document.getElementById('paymentMethod').value,
+        phone: document.getElementById('customerPhone').value,
+        deliveryType: document.querySelector('input[name="deliveryType"]:checked')?.value,
+        recipientName: document.getElementById('recipientName').value.trim(),
+        address: document.getElementById('deliveryAddress').value.trim()
+    };
+}
+
+function sendOrderData() {
+    try {
+        if (state.cart.length === 0) {
+            showNotification('Корзина пуста. Добавьте товары в корзину.', 'error');
+            return;
+        }
+        
+        const orderData = gatherOrderData();
+        
+        if (tg?.sendData) {
+            tg.sendData(JSON.stringify(orderData));
+        }
+        
+        showNotification(`Заказ отправлен! Сумма: ${orderData.total} ₽`, 'success');
+        
+        if (tg?.showPopup) {
+            tg.showPopup({
+                title: 'Заказ отправлен!',
+                message: `Спасибо! Ваш заказ на ${orderData.total} ₽ принят.`,
+                buttons: [{ type: 'ok' }]
+            });
+        }
+        
+        state.cart = [];
+        saveCartToStorage();
+        updateCartUI();
+        document.getElementById('cartSidebar').classList.remove('open');
+        document.getElementById('checkoutSidebar').classList.remove('open');
+    } catch (error) {
+        console.error('Ошибка при оформлении заказа:', error);
+        showNotification('Произошла ошибка при оформлении заказа. Попробуйте еще раз.', 'error');
+    }
+}
+
 function setupEventListeners() {
     // Поиск по меню
     const searchInput = document.getElementById('searchInput');
@@ -354,51 +453,44 @@ function setupEventListeners() {
         }
     });
     
-    // Оформление заказа
-    if (tg && tg.MainButton) {
-        tg.MainButton.onClick(() => {
-            try {
-                const orderData = {
-                    items: state.cart,
-                    total: state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-                    user: tg.initDataUnsafe?.user || null,
-                    timestamp: new Date().toISOString()
-                };
-                
-                // Проверяем, что корзина не пуста
-                if (orderData.items.length === 0) {
-                    showNotification('Корзина пуста. Добавьте товары в корзину.', 'error');
-                    return;
-                }
-                
-                // Отправляем данные в бота
-                if (tg.sendData) {
-                    tg.sendData(JSON.stringify(orderData));
-                }
-                
-                // Показываем уведомление об успешном заказе
-                showNotification(`Заказ оформлен! Сумма: ${orderData.total} ₽`, 'success');
-                
-                // Также показываем popup в Telegram, если доступен
-                if (tg && tg.showPopup) {
-                    tg.showPopup({
-                        title: 'Заказ оформлен!',
-                        message: `Спасибо! Ваш заказ на ${orderData.total} ₽ принят.`,
-                        buttons: [{ type: 'ok' }]
-                    });
-                }
-                
-                // Очищаем корзину
-                state.cart = [];
-                saveCartToStorage(); // Сохраняем пустую корзину
-                updateCartUI();
-                document.getElementById('cartSidebar').classList.remove('open');
-            } catch (error) {
-                console.error('Ошибка при оформлении заказа:', error);
-                showNotification('Произошла ошибка при оформлении заказа. Попробуйте еще раз.', 'error');
+    document.getElementById('closeCheckout').onclick = () => {
+        document.getElementById('checkoutSidebar').classList.remove('open');
+    };
+    
+    document.getElementById('orderBtn').onclick = () => {
+        if (state.cart.length === 0) {
+            showNotification('Корзина пуста. Добавьте товары в корзину.', 'error');
+            return;
+        }
+        document.getElementById('checkoutSidebar').classList.add('open');
+    };
+    
+    document.getElementById('confirmOrderBtn').onclick = sendOrderData;
+    
+    document.getElementById('cutleryMinus').addEventListener('click', () => updateCutlery(-1));
+    document.getElementById('cutleryPlus').addEventListener('click', () => updateCutlery(1));
+    document.getElementById('requestPhoneBtn').addEventListener('click', requestPhoneNumber);
+    document.getElementById('searchAddressBtn').addEventListener('click', () => showNotification('Поиск адреса пока в разработке', 'info'));
+    
+    // Модальное окно блюда
+    document.getElementById('closeItemModal').addEventListener('click', closeItemModal);
+    document.getElementById('itemModal').addEventListener('click', (e) => {
+        if (e.target.id === 'itemModal') {
+            closeItemModal();
+        }
+    });
+    document.getElementById('modalQtyMinus').addEventListener('click', () => updateModalQuantity(-1));
+    document.getElementById('modalQtyPlus').addEventListener('click', () => updateModalQuantity(1));
+    document.getElementById('modalAddBtn').addEventListener('click', addModalItemToCart);
+    
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('itemModal');
+            if (modal.classList.contains('open')) {
+                closeItemModal();
             }
-        });
-    }
+        }
+    });
 }
 
 // ЗАПУСК ПРИЛОЖЕНИЯ

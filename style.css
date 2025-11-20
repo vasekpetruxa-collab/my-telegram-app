@@ -19,38 +19,70 @@ body {
 
 /* ШАПКА */
 .header {
-    background: linear-gradient(135deg, #aa1717, #242418);
-    color: rgb(17, 4, 4);
     padding: 15px;
     position: sticky;
     top: 0;
     z-index: 100;
+    background: linear-gradient(135deg, #f72222, #790101ee);
+}
+
+.header-banner {
+    position: relative;
+    border-radius: 24px;
+    overflow: hidden;
+    min-height: 160px;
+    background: linear-gradient(135deg, #4e3030, #070707);
+}
+
+.header-banner-image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    z-index: 0;
 }
 
 .header-content {
+    position: relative;
+    z-index: 1;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    padding: 20px;
+    color: rgb(224, 166, 7);
 }
 
 .restaurant-name {
     font-size: 24px;
     font-weight: 800;
+    text-shadow: 0 4px 12px rgba(221, 130, 10, 0.35);
 }
 
 .cart-btn {
-    background: rgba(255,255,255,0.2);
+    background: rgba(0, 0, 0, 0.4);
     border: none;
     color: white;
-    padding: 8px 12px;
-    border-radius: 20px;
+    padding: 8px 14px;
+    border-radius: 24px;
     cursor: pointer;
     font-size: 16px;
     transition: transform 0.2s, background 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .cart-btn:active {
     transform: scale(0.95);
+}
+
+.cart-icon {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+    display: block;
 }
 
 /* ПОИСК */
@@ -122,6 +154,12 @@ body {
 .menu-items {
     display: grid;
     gap: 15px;
+    grid-template-columns: 1fr;
+}
+
+.menu-items.category-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
 }
 
 .menu-item {
@@ -138,6 +176,25 @@ body {
 
 .menu-item:active {
     transform: scale(0.98);
+}
+
+.menu-item.compact {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+}
+
+.menu-item.compact .item-image {
+    width: 100%;
+    height: 140px;
+}
+
+.menu-item.compact .item-info {
+    text-align: left;
+}
+
+.menu-item.compact .item-actions {
+    width: 100%;
 }
 
 @keyframes fadeIn {
@@ -179,6 +236,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    margin-left: auto;
 }
 
 .item-name {
@@ -249,6 +307,88 @@ body {
     flex-shrink: 0;
 }
 
+/* МОДАЛЬНОЕ ОКНО */
+.item-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 2000;
+}
+
+.item-modal.open {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.item-modal-dialog {
+    background: white;
+    border-radius: 20px;
+    max-width: 420px;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.modal-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    font-size: 18px;
+}
+
+.modal-image-wrapper {
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+}
+
+.modal-image-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.modal-content {
+    padding: 0 20px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.modal-item-details {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 600;
+}
+
+.modal-quantity-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+}
+
+.modal-add-btn {
+    width: 100%;
+}
+
 /* КОРЗИНА */
 .cart-sidebar {
     position: fixed;
@@ -306,6 +446,24 @@ body {
     flex: 1;
     padding: 15px;
     overflow-y: auto;
+}
+
+.cart-extras {
+    padding: 0 15px 15px;
+    border-top: 1px solid #f1f3f4;
+}
+
+.extras-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 12px;
+}
+
+.extras-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .cart-item {
@@ -380,6 +538,80 @@ body {
     background: #3da39a;
 }
 
+.checkout-sidebar {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: 100%;
+    height: 100%;
+    background: white;
+    transition: right 0.3s ease;
+    z-index: 1100;
+    display: flex;
+    flex-direction: column;
+    box-shadow: -2px 0 10px rgba(0,0,0,0.15);
+}
+
+.checkout-sidebar.open {
+    right: 0;
+}
+
+.checkout-content {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.checkout-footer {
+    padding: 15px;
+    border-top: 2px solid #e9ecef;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-group label {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.form-group input,
+.form-group select {
+    border: 1px solid #e3e3e3;
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 14px;
+}
+
+.phone-row {
+    display: flex;
+    gap: 10px;
+}
+
+.phone-row input {
+    flex: 1;
+}
+
+.secondary-btn {
+    background: #f1f3f5;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 14px;
+    cursor: pointer;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.delivery-type {
+    display: flex;
+    gap: 15px;
+}
 /* TOAST УВЕДОМЛЕНИЯ */
 .toast-container {
     position: fixed;

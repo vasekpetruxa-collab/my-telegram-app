@@ -14,12 +14,16 @@
     <div class="app">
         <!-- ШАПКА -->
         <header class="header">
-            <div class="header-content">
-                <h1 class="restaurant-name">🍕 гастропаб "БУНКЕР"</h1>
-                <div class="header-actions">
-                    <button class="cart-btn" id="cartBtn">
-                        🛒 <span class="cart-count">0</span>
-                    </button>
+            <div class="header-banner">
+                <img src="images/assets/images/header/banner.jpg" alt="Гастропаб Бункер" class="header-banner-image">
+                <div class="header-content">
+                    <h1 class="restaurant-name"> гастропаб "БУНКЕР"</h1>
+                    <div class="header-actions">
+                        <button class="cart-btn" id="cartBtn">
+                            <img src="images/assets/images/icons/bill2.png" alt="Счёт" class="cart-icon">
+                            <span class="cart-count">0</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </header>
@@ -48,16 +52,98 @@
             <div class="cart-items" id="cartItems">
                 <!-- товары в корзине -->
             </div>
+            <div class="cart-extras">
+                <div class="extras-row">
+                    <span>Приборы</span>
+                    <div class="extras-controls">
+                        <button class="quantity-btn" id="cutleryMinus">-</button>
+                        <span id="cutleryCount">0</span>
+                        <button class="quantity-btn" id="cutleryPlus">+</button>
+                    </div>
+                </div>
+            </div>
             <div class="cart-footer">
                 <div class="cart-total">
                     Итого: <span id="totalAmount">0</span> ₽
                 </div>
-                <button class="order-btn" id="orderBtn">Оформить заказ</button>
+                <button class="order-btn" id="orderBtn">Далее</button>
+            </div>
+        </div>
+
+        <!-- ШАГ ПОДТВЕРЖДЕНИЯ ЗАКАЗА -->
+        <div class="checkout-sidebar" id="checkoutSidebar">
+            <div class="cart-header">
+                <h2>Оформление заказа</h2>
+                <button class="close-cart" id="closeCheckout">✕</button>
+            </div>
+            <div class="checkout-content">
+                <div class="form-group">
+                    <label>Способ оплаты</label>
+                    <select id="paymentMethod">
+                        <option value="cod">При получении</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Номер телефона</label>
+                    <div class="phone-row">
+                        <input type="text" id="customerPhone" placeholder="+7 (___) ___-__-__" readonly>
+                        <button class="secondary-btn" id="requestPhoneBtn">Добавить номер</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Тип доставки</label>
+                    <div class="delivery-type">
+                        <label>
+                            <input type="radio" name="deliveryType" value="pickup" checked>
+                            Самовывоз
+                        </label>
+                        <label>
+                            <input type="radio" name="deliveryType" value="delivery">
+                            Доставка
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Имя получателя</label>
+                    <input type="text" id="recipientName" placeholder="Имя">
+                </div>
+                <div class="form-group">
+                    <label>Адрес</label>
+                    <input type="text" id="deliveryAddress" placeholder="Введите адрес для поиска">
+                    <button class="secondary-btn" id="searchAddressBtn">Найти адрес</button>
+                </div>
+            </div>
+            <div class="checkout-footer">
+                <button class="order-btn" id="confirmOrderBtn">Отправить заказ</button>
             </div>
         </div>
 
         <!-- TOAST УВЕДОМЛЕНИЯ -->
         <div class="toast-container" id="toastContainer"></div>
+
+        <!-- МОДАЛЬНОЕ ОКНО БЛЮДА -->
+        <div class="item-modal" id="itemModal" aria-hidden="true">
+            <div class="item-modal-dialog">
+                <button class="modal-close" id="closeItemModal" aria-label="Закрыть">✕</button>
+                <div class="modal-image-wrapper">
+                    <img id="modalItemImage" alt="" />
+                </div>
+                <div class="modal-content">
+                    <h3 id="modalItemName"></h3>
+                    <p id="modalItemDescription"></p>
+                    <div class="modal-item-details">
+                        <span id="modalItemWeight"></span>
+                        <span id="modalItemPrice"></span>
+                    </div>
+                    <div class="modal-quantity-controls">
+                        <button class="quantity-btn" id="modalQtyMinus">-</button>
+                        <span class="item-quantity" id="modalQuantity">1</span>
+                        <button class="quantity-btn" id="modalQtyPlus">+</button>
+                    </div>
+                    <button class="order-btn modal-add-btn" id="modalAddBtn">Добавить в корзину</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="data.js"></script>
