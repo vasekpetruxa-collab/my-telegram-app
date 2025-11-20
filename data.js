@@ -10,79 +10,79 @@ const menuData = {
             id: "pizza",
             name: " Пицца",
             description: "Настоящая итальянская пицца",
-            image: 111
+            image: "images/assets/images/pizza/margarita.jpeg",
         },
         {
             id: "rebra",
             name: " Ребра",
             description: "свиные ребра с гарниром",
-            image: "./assets/images/categories/rebra.jpeg"
+            image: "images/assets/images/pizza/margarita.jpeg",
         },
         {
             id: "krilo",
             name: " Крылья",
             description: "куриные крылья с гарниром",
-            image: "./assets/images/categories/krilo.jpg"
+            image: "images/assets/images/pizza/margarita.jpeg",
         },
         {
             id: "zakus",
             name: " Холодные закуски",
             description: "закуски к пенному",
-            image: "./assets/images/categories/zakus-holod.jpg"
+            image: "images/assets/images/pizza/margarita.jpeg",
         },
         {
             id: "zakus k pen",
             name: " Закуски",
             description: "закуски горячие",
-            image: "./assets/images/categories/zakus-goryach.jpg"
+            image: "images/assets/images/pizza/margarita.jpeg",
         },
         {
             id: "sup",
             name: " Супы",
             description: "супы на любой вкус",
-            image: "./assets/images/categories/sup.jpg"
+            image: "images/assets/images/pizza/margarita.jpeg",
         },
         {
             id: "burgers",
             name: " Бургеры",
             description: "сочные, мощные бургеры",
-            image: "./assets/images/categories/burger.jpg"
+            image: "images/assets/images/pizza/margarita.jpeg",
         },
         {
             id: "hot eat",
             name: " Горячие блюда",
             description: "вкуснейшие блюда",
-            image: "./assets/images/categories/hot.jpg"
+            image: "images/assets/images/pizza/margarita.jpeg",
         },
         {
             id: "deserts",
             name: " Десерты",
             description: "десерты собственного приготовления",
-            image: "./assets/images/categories/desert.jpg"
+            image: "images/assets/images/pizza/margarita.jpeg",
         },
         {
             id: "sets",
             name: " Сеты на компанию",
             description: "сеты к пенному",
-            image: "./assets/images/categories/set.jpg"
+            image: "images/assets/images/pizza/margarita.jpeg",
         },
         {
             id: "pasta", 
             name: " Паста",
             description: "Свежая паста ручной работы",
-            image: "./assets/images/categories/pasta.jpg"
+            image: "images/assets/images/pizza/margarita.jpeg",
         },
         {
             id: "salads",
             name: " Салаты",
             description: "Свежие салаты",
-            image: "./assets/images/categories/salad.jpg"
+            image: "images/assets/images/pizza/margarita.jpeg",
         },
         {
             id: "drinks",
             name: " Напитки", 
             description: "Освежающие напитки",
-            image: "./assets/images/categories/drink.jpg"
+            image: "images/assets/images/pizza/margarita.jpeg",
         }
     ],
     
@@ -94,7 +94,7 @@ const menuData = {
             name: "Римская Маргарита",
             description: "Томатный соус, моцарелла, базилик, черри, соус песто",
             price: 450,
-            image: "./images/assets/images/pizza/margarita.jpeg",
+            image: "images/assets/images/pizza/margarita.jpeg",
             weight: "380г"
         },
         {
@@ -103,7 +103,7 @@ const menuData = {
             name: "Пепперони",
             description: "Томатный соус, моцарелла, пепперони",
             price: 550,
-            image: "./images/assets/images/pizza/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             weight: "500г"
         },
         {
@@ -112,7 +112,7 @@ const menuData = {
             name: "4 Сыра", 
             description: "Моцарелла, горгонзола, пармезан, рикотта",
             price: 600,
-            image: "./images/assets/images/pizza/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             weight: "480г"
         },
         {
@@ -121,7 +121,7 @@ const menuData = {
             name: "Римская Мясная",
             description: "Томатный соус, моцарелла, базилик",
             price: 450,
-            image: "./images/assets/images/pizza/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             weight: "450г"
         },
         {
@@ -130,7 +130,7 @@ const menuData = {
             name: "СТАС",
             description: "Томатный соус, моцарелла, базилик",
             price: 450,
-            image: "./images/assets/images/pizza/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             weight: "450г"
         },
         {
@@ -139,7 +139,7 @@ const menuData = {
             name: "СТАС",
             description: "Томатный соус, моцарелла, базилик",
             price: 450,
-            image: "./images/assets/images/pizza/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             weight: "450г"
         },
         // ПАСТА
@@ -149,7 +149,7 @@ const menuData = {
             name: "Карбонара",
             description: "Спагетти, бекон, сыр, яйцо",
             price: 420,
-            image: "./images/assets/images/pasta/", 
+            image: "images/assets/images/pizza/margarita.jpeg", 
             weight: "350г"
         },
         {
@@ -158,7 +158,7 @@ const menuData = {
             name: "Карбонара",
             description: "Спагетти, бекон, сыр, яйцо",
             price: 420,
-            image: "./images/assets/images/pasta/", 
+            image: "images/assets/images/pizza/margarita.jpeg", 
             weight: "350г"
         },
         // РЕБРА
@@ -168,7 +168,7 @@ const menuData = {
             name: "Карбонара",
             description: "Спагетти, бекон, сыр, яйцо",
             price: 420,
-            image: "./images/assets/images/rebra/", 
+            image: "images/assets/images/pizza/margarita.jpeg", 
             weight: "350г"
         },
         {
@@ -177,7 +177,7 @@ const menuData = {
             name: "Карбонара",
             description: "Спагетти, бекон, сыр, яйцо",
             price: 420,
-            image: "./images/assets/images/rebra/", 
+            image: "images/assets/images/pizza/margarita.jpeg", 
             weight: "350г"
         },
         {
@@ -186,7 +186,7 @@ const menuData = {
             name: "Карбонара",
             description: "Спагетти, бекон, сыр, яйцо",
             price: 420,
-            image: "./images/assets/images/rebra/", 
+            image: "images/assets/images/pizza/margarita.jpeg", 
             weight: "350г"
         },
         //КРЫЛЬЯ
@@ -196,7 +196,7 @@ const menuData = {
             name: "Карбонара",
             description: "Спагетти, бекон, сыр, яйцо",
             price: 420,
-            image: "./images/assets/images/krilo/", 
+            image: "images/assets/images/pizza/margarita.jpeg", 
             weight: "350г"
         },
         {
@@ -205,7 +205,7 @@ const menuData = {
             name: "Карбонара",
             description: "Спагетти, бекон, сыр, яйцо",
             price: 420,
-            image: "./images/assets/images/krilo/", 
+            image: "images/assets/images/pizza/margarita.jpeg", 
             weight: "350г"
         },
         {
@@ -214,7 +214,7 @@ const menuData = {
             name: "Карбонара",
             description: "Спагетти, бекон, сыр, яйцо",
             price: 420,
-            image: "./images/assets/images/krilo/", 
+            image: "images/assets/images/pizza/margarita.jpeg", 
             weight: "350г"
         },
         //ЗАКУСКИ
@@ -224,7 +224,7 @@ const menuData = {
             name: "Карбонара",
             description: "Спагетти, бекон, сыр, яйцо",
             price: 420,
-            image: "./images/assets/images/zakuski/", 
+            image: "images/assets/images/pizza/margarita.jpeg", 
             weight: "350г"
         },
         {
@@ -233,7 +233,7 @@ const menuData = {
             name: "Карбонара",
             description: "Спагетти, бекон, сыр, яйцо",
             price: 420,
-            image: "./images/assets/images/zakuski/", 
+            image: "images/assets/images/pizza/margarita.jpeg", 
             weight: "350г"
         },
         {
@@ -242,7 +242,7 @@ const menuData = {
             name: "Карбонара",
             description: "Спагетти, бекон, сыр, яйцо",
             price: 420,
-            image: "./images/assets/images/zakuski/", 
+            image: "images/assets/images/pizza/margarita.jpeg", 
             weight: "350г"
         },
         {
@@ -251,7 +251,7 @@ const menuData = {
             name: "Карбонара",
             description: "Спагетти, бекон, сыр, яйцо",
             price: 420,
-            image: "./images/assets/images/zakuski/", 
+            image: "images/assets/images/pizza/margarita.jpeg", 
             weight: "350г"
         },
         {
@@ -260,7 +260,7 @@ const menuData = {
             name: "Карбонара",
             description: "Спагетти, бекон, сыр, яйцо",
             price: 420,
-            image: "./images/assets/images/zakuski/", 
+            image: "images/assets/images/pizza/margarita.jpeg", 
             weight: "350г"
         },
         {
@@ -269,7 +269,7 @@ const menuData = {
             name: "Карбонара",
             description: "Спагетти, бекон, сыр, яйцо",
             price: 420,
-            image: "./images/assets/images/zakuski/", 
+            image: "images/assets/images/pizza/margarita.jpeg", 
             weight: "350г"
         },
         {
@@ -278,7 +278,7 @@ const menuData = {
             name: "Карбонара",
             description: "Спагетти, бекон, сыр, яйцо",
             price: 420,
-            image: "./images/assets/images/zakuski/", 
+            image: "images/assets/images/pizza/margarita.jpeg", 
             weight: "350г"
         },
         {
@@ -287,7 +287,7 @@ const menuData = {
             name: "Карбонара",
             description: "Спагетти, бекон, сыр, яйцо",
             price: 420,
-            image: "./images/assets/images/zakuski/", 
+            image: "images/assets/images/pizza/margarita.jpeg", 
             weight: "350г"
         },
         {
@@ -296,7 +296,7 @@ const menuData = {
             name: "Карбонара",
             description: "Спагетти, бекон, сыр, яйцо",
             price: 420,
-            image: "./images/assets/images/zakuski/", 
+            image: "images/assets/images/pizza/margarita.jpeg", 
             weight: "350г"
         },
         {
@@ -305,7 +305,7 @@ const menuData = {
             name: "Карбонара",
             description: "Спагетти, бекон, сыр, яйцо",
             price: 420,
-            image: "./images/assets/images/zakuski/", 
+            image: "images/assets/images/pizza/margarita.jpeg", 
             weight: "350г"
         },
         {
@@ -314,7 +314,7 @@ const menuData = {
             name: "Карбонара",
             description: "Спагетти, бекон, сыр, яйцо",
             price: 420,
-            image: "./images/assets/images/zakuski/", 
+            image: "images/assets/images/pizza/margarita.jpeg", 
             weight: "350г"
         },
         {
@@ -323,7 +323,7 @@ const menuData = {
             name: "Карбонара",
             description: "Спагетти, бекон, сыр, яйцо",
             price: 420,
-            image: "./images/assets/images/zakuski/", 
+            image: "images/assets/images/pizza/margarita.jpeg", 
             weight: "350г"
         },
         {
@@ -332,7 +332,7 @@ const menuData = {
             name: "Карбонара",
             description: "Спагетти, бекон, сыр, яйцо",
             price: 420,
-            image: "./images/assets/images/zakuski/", 
+            image: "images/assets/images/pizza/margarita.jpeg", 
             weight: "350г"
         },
         // Закуски горячие
@@ -342,7 +342,7 @@ const menuData = {
             name: "Цезарь",
             description: "Курица, салат, сухарики, соус цезарь",
             price: 320,
-            image: "./images/assets/images/zakuski k pen/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             weight: "280г"
         },
         {
@@ -351,7 +351,7 @@ const menuData = {
             name: "Цезарь",
             description: "Курица, салат, сухарики, соус цезарь",
             price: 320,
-            image: "./images/assets/images/zakuski k pen/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             weight: "280г"
         },
         {
@@ -360,7 +360,7 @@ const menuData = {
             name: "Цезарь",
             description: "Курица, салат, сухарики, соус цезарь",
             price: 320,
-            image: "./images/assets/images/zakuski k pen/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             weight: "280г"
         },
         {
@@ -369,7 +369,7 @@ const menuData = {
             name: "Цезарь",
             description: "Курица, салат, сухарики, соус цезарь",
             price: 320,
-            image: "./images/assets/images/zakuski k pen/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             weight: "280г"
         },
         {
@@ -378,7 +378,7 @@ const menuData = {
             name: "Цезарь",
             description: "Курица, салат, сухарики, соус цезарь",
             price: 320,
-            image: "./images/assets/images/zakuski k pen/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             weight: "280г"
         },
         {
@@ -387,7 +387,7 @@ const menuData = {
             name: "Цезарь",
             description: "Курица, салат, сухарики, соус цезарь",
             price: 320,
-            image: "./images/assets/images/zakuski k pen/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             weight: "280г"
         },
         {
@@ -396,7 +396,7 @@ const menuData = {
             name: "Цезарь",
             description: "Курица, салат, сухарики, соус цезарь",
             price: 320,
-            image: "./images/assets/images/zakuski k pen/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             weight: "280г"
         },
         {
@@ -405,7 +405,7 @@ const menuData = {
             name: "Цезарь",
             description: "Курица, салат, сухарики, соус цезарь",
             price: 320,
-            image: "./images/assets/images/zakuski k pen/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             weight: "280г"
         },
         {
@@ -414,7 +414,7 @@ const menuData = {
             name: "Цезарь",
             description: "Курица, салат, сухарики, соус цезарь",
             price: 320,
-            image: "./images/assets/images/zakuski k pen/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             weight: "280г"
         },
         {
@@ -423,7 +423,7 @@ const menuData = {
             name: "Цезарь",
             description: "Курица, салат, сухарики, соус цезарь",
             price: 320,
-            image: "./images/assets/images/zakuski k pen/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             weight: "280г"
         },
         // СУП
@@ -433,7 +433,7 @@ const menuData = {
             name: "Цезарь",
             description: "Курица, салат, сухарики, соус цезарь",
             price: 320,
-            image: "./images/assets/images/sup/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             weight: "280г"
         },
         {
@@ -442,7 +442,7 @@ const menuData = {
             name: "Цезарь",
             description: "Курица, салат, сухарики, соус цезарь",
             price: 320,
-            image: "./images/assets/images/sup/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             weight: "280г"
         },
         {
@@ -451,7 +451,7 @@ const menuData = {
             name: "Цезарь",
             description: "Курица, салат, сухарики, соус цезарь",
             price: 320,
-            image: "./images/assets/images/sup/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             weight: "280г"
         },
         {
@@ -460,7 +460,7 @@ const menuData = {
             name: "Цезарь",
             description: "Курица, салат, сухарики, соус цезарь",
             price: 320,
-            image: "./images/assets/images/sup/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             weight: "280г"
         },
         {
@@ -469,7 +469,7 @@ const menuData = {
             name: "Цезарь",
             description: "Курица, салат, сухарики, соус цезарь",
             price: 320,
-            image: "./images/assets/images/sup/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             weight: "280г"
         },
         // БУРГЕРЫ
@@ -479,7 +479,7 @@ const menuData = {
             name: "Цезарь",
             description: "Курица, салат, сухарики, соус цезарь",
             price: 320,
-            image: "./images/assets/images/burgers/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             weight: "280г"
         },
         {
@@ -488,7 +488,7 @@ const menuData = {
             name: "Цезарь",
             description: "Курица, салат, сухарики, соус цезарь",
             price: 320,
-            image: "./images/assets/images/burgers/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             weight: "280г"
         },
         {
@@ -497,7 +497,7 @@ const menuData = {
             name: "Цезарь",
             description: "Курица, салат, сухарики, соус цезарь",
             price: 320,
-            image: "./images/assets/images/burgers/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             weight: "280г"
         },
         {
@@ -506,7 +506,7 @@ const menuData = {
             name: "Цезарь",
             description: "Курица, салат, сухарики, соус цезарь",
             price: 320,
-            image: "./images/assets/images/burgers/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             weight: "280г"
         }, 
         // ГОРЯЧИЕ БЛЮДА
@@ -516,7 +516,7 @@ const menuData = {
             name: "Цезарь",
             description: "Курица, салат, сухарики, соус цезарь",
             price: 320,
-            image: "./images/assets/images/hot eat/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             weight: "280г"
         },
         {
@@ -525,7 +525,7 @@ const menuData = {
             name: "Цезарь",
             description: "Курица, салат, сухарики, соус цезарь",
             price: 320,
-            image: "./images/assets/images/hot eat/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             weight: "280г"
         },
         {
@@ -534,7 +534,7 @@ const menuData = {
             name: "Цезарь",
             description: "Курица, салат, сухарики, соус цезарь",
             price: 320,
-            image: "./images/assets/images/hot eat/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             weight: "280г"
         },
         // ДЕСЕРТЫ
@@ -544,7 +544,7 @@ const menuData = {
             name: "Цезарь",
             description: "Курица, салат, сухарики, соус цезарь",
             price: 320,
-            image: "./images/assets/images/deserts/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             weight: "280г"
         },
         {
@@ -553,7 +553,7 @@ const menuData = {
             name: "Цезарь",
             description: "Курица, салат, сухарики, соус цезарь",
             price: 320,
-            image: "./images/assets/images/deserts/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             weight: "280г"
         },
         {
@@ -562,7 +562,7 @@ const menuData = {
             name: "Цезарь",
             description: "Курица, салат, сухарики, соус цезарь",
             price: 320,
-            image: "./images/assets/images/deserts/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             weight: "280г"
         },
         //СЕТЫ
@@ -572,7 +572,7 @@ const menuData = {
             name: "Цезарь",
             description: "Курица, салат, сухарики, соус цезарь",
             price: 320,
-            image: "./images/assets/images/sets/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             weight: "280г"
         },
         {
@@ -581,7 +581,7 @@ const menuData = {
             name: "Цезарь",
             description: "Курица, салат, сухарики, соус цезарь",
             price: 320,
-            image: "./images/assets/images/sets/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             weight: "280г"
         },
         {
@@ -590,7 +590,7 @@ const menuData = {
             name: "Цезарь",
             description: "Курица, салат, сухарики, соус цезарь",
             price: 320,
-            image: "./images/assets/images/sets/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             weight: "280г"
         },
         {
@@ -599,7 +599,7 @@ const menuData = {
             name: "Цезарь",
             description: "Курица, салат, сухарики, соус цезарь",
             price: 320,
-            image: "./images/assets/images/sets/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             weight: "280г"
         },
             // САЛАТЫ
@@ -609,7 +609,7 @@ const menuData = {
             name: "Цезарь",
             description: "Курица, салат, сухарики, соус цезарь",
             price: 320,
-            image: "./images/assets/images/salads/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             weight: "280г"
         },
         {
@@ -618,7 +618,7 @@ const menuData = {
             name: "Цезарь",
             description: "Курица, салат, сухарики, соус цезарь",
             price: 320,
-            image: "./images/assets/images/salads/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             weight: "280г"
         },
         {
@@ -627,7 +627,7 @@ const menuData = {
             name: "Цезарь",
             description: "Курица, салат, сухарики, соус цезарь",
             price: 320,
-            image: "./images/assets/images/salads/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             weight: "280г"
         },
         {
@@ -636,7 +636,7 @@ const menuData = {
             name: "Цезарь",
             description: "Курица, салат, сухарики, соус цезарь",
             price: 320,
-            image: "./images/assets/images/salads/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             weight: "280г"
         },
         {
@@ -645,7 +645,7 @@ const menuData = {
             name: "Цезарь",
             description: "Курица, салат, сухарики, соус цезарь",
             price: 320,
-            image: "./images/assets/images/salads/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             weight: "280г"
         },
         {
@@ -654,7 +654,7 @@ const menuData = {
             name: "Цезарь",
             description: "Курица, салат, сухарики, соус цезарь",
             price: 320,
-            image: "./images/assets/images/salads/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             weight: "280г"
         },
         
@@ -665,7 +665,7 @@ const menuData = {
             name: "Кола",
             description: "Coca-Cola 0.5л",
             price: 120,
-            image: "./images/assets/images/drinks/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             volume: "500мл"
         },
         {
@@ -674,7 +674,7 @@ const menuData = {
             name: "Кола",
             description: "Coca-Cola 0.5л",
             price: 120,
-            image: "./images/assets/images/drinks/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             volume: "500мл"
         },
         {
@@ -683,7 +683,7 @@ const menuData = {
             name: "Кола",
             description: "Coca-Cola 0.5л",
             price: 120,
-            image: "./images/assets/images/drinks/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             volume: "500мл"
         },
         {
@@ -692,7 +692,7 @@ const menuData = {
             name: "Кола",
             description: "Coca-Cola 0.5л",
             price: 120,
-            image: "./images/assets/images/drinks/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             volume: "500мл"
         },
         {
@@ -701,7 +701,7 @@ const menuData = {
             name: "Кола",
             description: "Coca-Cola 0.5л",
             price: 120,
-            image: "./images/assets/images/drinks/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             volume: "500мл"
         },
         {
@@ -710,7 +710,7 @@ const menuData = {
             name: "Кола",
             description: "Coca-Cola 0.5л",
             price: 120,
-            image: "./images/assets/images/drinks/",
+            image: "images/assets/images/pizza/margarita.jpeg",
             volume: "500мл"
         },
     ]

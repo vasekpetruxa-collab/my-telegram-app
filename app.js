@@ -6,7 +6,7 @@ if (window.Telegram && window.Telegram.WebApp) {
     tg = window.Telegram.WebApp;
     tg.expand();
     if (tg.MainButton) {
-        tg.MainButton.setParams({ text: '', is_visible: false });
+        tg.MainButton.setParams({ text: 'test', is_visible: false });
         tg.MainButton.hide();
         tg.MainButton.onClick(() => {});
     }
