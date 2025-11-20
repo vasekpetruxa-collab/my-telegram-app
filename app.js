@@ -5,7 +5,11 @@ let tg = null;
 if (window.Telegram && window.Telegram.WebApp) {
     tg = window.Telegram.WebApp;
     tg.expand();
-    tg.MainButton.setText("Оформить заказ").hide();
+    if (tg.MainButton) {
+        tg.MainButton.setParams({ text: '', is_visible: false });
+        tg.MainButton.hide();
+        tg.MainButton.onClick(() => {});
+    }
 } else {
     console.warn('Telegram WebApp API не найден. Приложение работает в режиме разработки.');
     // Создаем заглушку для разработки
@@ -34,18 +38,35 @@ if (window.Telegram && window.Telegram.WebApp) {
 }
 
 // Состояние приложения
+const defaultCategoryId = menuData?.categories?.[0]?.id || null;
+const PICKUP_ADDRESS = 'г. Шахты, ул. Советская, дом 235 «Бункер»';
+
 let state = {
     cart: [],
-    currentCategory: null,
+    currentCategory: defaultCategoryId,
     searchQuery: '',
     modalItemId: null,
     modalQuantity: 1,
-    cutleryCount: 0
+    cutleryCount: 0,
+    paymentMethod: 'cod',
+    deliveryType: 'pickup',
+    customerPhone: '',
+    recipientName: '',
+    deliveryAddress: PICKUP_ADDRESS,
+    addressSuggestions: []
 };
 
 function getCartItemQuantity(itemId) {
     const item = state.cart.find(cartItem => cartItem.id === itemId);
     return item ? item.quantity : 0;
+}
+
+function resolveItemImage(item) {
+    const categoryImage = menuData.categories.find(cat => cat.id === item.category)?.image;
+    const hasCustomImage = typeof item.image === 'string' && /[./]/.test(item.image);
+    return hasCustomImage
+        ? item.image
+        : (categoryImage || './assets/images/categories/placeholder.jpg');
 }
 
 // КЛЮЧ ДЛЯ LOCALSTORAGE
@@ -76,9 +97,16 @@ function loadCartFromStorage() {
 // ИНИЦИАЛИЗАЦИЯ ПРИЛОЖЕНИЯ
 function initApp() {
     loadCartFromStorage(); // Загружаем корзину из localStorage
+    if (!state.currentCategory) {
+        state.currentCategory = defaultCategoryId;
+    }
+    if (state.deliveryType === 'pickup') {
+        state.deliveryAddress = PICKUP_ADDRESS;
+    }
     renderCategories();
     renderMenuItems();
     setupEventListeners();
+    setDeliveryMode(state.deliveryType);
     updateCartUI();
 }
 
@@ -170,11 +198,7 @@ function createMenuItem(item) {
     const isCategoryView = Boolean(state.currentCategory);
     itemElement.className = `menu-item ${isCategoryView ? 'compact' : ''}`;
     itemElement.dataset.itemId = item.id;
-    const categoryImage = menuData.categories.find(cat => cat.id === item.category)?.image;
-    const hasCustomImage = typeof item.image === 'string' && /[./]/.test(item.image);
-    const itemImageSrc = hasCustomImage
-        ? item.image
-        : (categoryImage || './assets/images/categories/placeholder.jpg');
+    const itemImageSrc = resolveItemImage(item);
     
     itemElement.innerHTML = `
         <div class="item-image">
@@ -264,15 +288,23 @@ function updateCartUI() {
     state.cart.forEach(item => {
         const cartItem = document.createElement('div');
         cartItem.className = 'cart-item';
+        const itemImageSrc = resolveItemImage(item);
         cartItem.innerHTML = `
-            <div class="cart-item-info">
-                <h4>${item.name}</h4>
-                <div>${item.price} ₽ × ${item.quantity}</div>
+            <div class="cart-item-thumb">
+                <img src="${itemImageSrc}" alt="${item.name}">
             </div>
-            <div class="cart-item-controls">
-                <button class="quantity-btn" onclick="updateCartQuantity(${item.id}, -1)">-</button>
-                <span>${item.quantity}</span>
-                <button class="quantity-btn" onclick="updateCartQuantity(${item.id}, 1)">+</button>
+            <div class="cart-item-body">
+                <div class="cart-item-row">
+                    <h4>${item.name}</h4>
+                    <span class="cart-item-price">${item.price} ₽</span>
+                </div>
+                <div class="cart-item-description">${item.description}</div>
+                <div class="cart-item-controls">
+                    <button class="quantity-btn" onclick="updateCartQuantity(${item.id}, -1)">-</button>
+                    <span>${item.quantity}</span>
+                    <button class="quantity-btn" onclick="updateCartQuantity(${item.id}, 1)">+</button>
+                    <div class="cart-item-total">${item.price * item.quantity} ₽</div>
+                </div>
             </div>
         `;
         cartItemsContainer.appendChild(cartItem);
@@ -281,15 +313,36 @@ function updateCartUI() {
     // Обновляем общую сумму
     const totalAmount = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     document.getElementById('totalAmount').textContent = totalAmount;
+    document.getElementById('cutleryCount').textContent = state.cutleryCount;
+    updateCheckoutSummary();
+}
+
+function updateCheckoutSummary() {
+    const summaryList = document.getElementById('checkoutSummary');
+    if (!summaryList) return;
     
-    // Управляем кнопкой оформления заказа
-    if (tg && tg.MainButton) {
-        if (totalAmount > 0) {
-            tg.MainButton.show();
-        } else {
-            tg.MainButton.hide();
-        }
+    summaryList.innerHTML = '';
+    
+    if (state.cart.length === 0) {
+        summaryList.innerHTML = `<p class="empty-summary">Корзина пуста. Добавьте блюда, чтобы продолжить.</p>`;
+    } else {
+        state.cart.forEach(item => {
+            const summaryItem = document.createElement('div');
+            summaryItem.className = 'summary-item';
+            summaryItem.innerHTML = `
+                <div>
+                    <div class="summary-item-name">${item.name}</div>
+                    <div class="summary-item-details">${item.quantity} × ${item.price} ₽</div>
+                </div>
+                <div class="summary-item-total">${item.price * item.quantity} ₽</div>
+            `;
+            summaryList.appendChild(summaryItem);
+        });
     }
+    
+    document.getElementById('summaryCutlery').textContent = `${state.cutleryCount} шт.`;
+    const totalAmount = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    document.getElementById('summaryTotal').textContent = `${totalAmount} ₽`;
 }
 
 // УВЕДОМЛЕНИЯ (TOAST)
@@ -320,11 +373,7 @@ function openItemModal(itemId) {
     state.modalItemId = itemId;
     state.modalQuantity = getCartItemQuantity(itemId) || 1;
     
-    const categoryImage = menuData.categories.find(cat => cat.id === item.category)?.image;
-    const hasCustomImage = typeof item.image === 'string' && /[./]/.test(item.image);
-    const itemImageSrc = hasCustomImage
-        ? item.image
-        : (categoryImage || './assets/images/categories/placeholder.jpg');
+    const itemImageSrc = resolveItemImage(item);
     
     document.getElementById('modalItemImage').src = itemImageSrc;
     document.getElementById('modalItemImage').alt = item.name;
@@ -365,6 +414,7 @@ function updateCutlery(change) {
     const nextValue = Math.max(0, state.cutleryCount + change);
     state.cutleryCount = nextValue;
     document.getElementById('cutleryCount').textContent = nextValue;
+    updateCheckoutSummary();
 }
 
 function requestPhoneNumber() {
@@ -372,6 +422,7 @@ function requestPhoneNumber() {
         tg.requestContact((response) => {
             if (response?.phone_number) {
                 document.getElementById('customerPhone').value = response.phone_number;
+                state.customerPhone = response.phone_number;
             }
         });
     } else {
@@ -379,18 +430,114 @@ function requestPhoneNumber() {
     }
 }
 
+function setDeliveryMode(mode) {
+    state.deliveryType = mode;
+    const addressInput = document.getElementById('deliveryAddress');
+    const searchBtn = document.getElementById('searchAddressBtn');
+    const suggestions = document.getElementById('addressSuggestions');
+    const pickupInfo = document.getElementById('pickupInfo');
+    
+    if (!addressInput || !searchBtn || !suggestions || !pickupInfo) {
+        return;
+    }
+    
+    if (mode === 'pickup') {
+        addressInput.value = PICKUP_ADDRESS;
+        addressInput.readOnly = true;
+        addressInput.classList.add('hidden');
+        searchBtn.classList.add('hidden');
+        suggestions.classList.add('hidden');
+        suggestions.classList.remove('visible');
+        pickupInfo.classList.remove('hidden');
+        state.deliveryAddress = PICKUP_ADDRESS;
+        state.addressSuggestions = [];
+        renderAddressSuggestions();
+    } else {
+        addressInput.readOnly = false;
+        addressInput.classList.remove('hidden');
+        searchBtn.classList.remove('hidden');
+        suggestions.classList.remove('hidden');
+        pickupInfo.classList.add('hidden');
+        if (state.deliveryAddress === PICKUP_ADDRESS) {
+            addressInput.value = '';
+            state.deliveryAddress = '';
+        }
+    }
+}
+
+function renderAddressSuggestions() {
+    const container = document.getElementById('addressSuggestions');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    if (state.deliveryType === 'pickup') {
+        container.classList.add('hidden');
+        return;
+    }
+    
+    if (!state.addressSuggestions.length) {
+        container.classList.remove('visible');
+        return;
+    }
+    
+    state.addressSuggestions.forEach(suggestion => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'address-suggestion';
+        button.dataset.address = suggestion.display_name;
+        button.textContent = suggestion.display_name;
+        container.appendChild(button);
+    });
+    
+    container.classList.add('visible');
+}
+
+async function searchAddress() {
+    const addressInput = document.getElementById('deliveryAddress');
+    const query = addressInput.value.trim();
+    
+    if (!query) {
+        showNotification('Введите адрес для поиска.', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&accept-language=ru&q=${encodeURIComponent(query)}`);
+        const data = await response.json();
+        state.addressSuggestions = data;
+        if (!data.length) {
+            showNotification('Адрес не найден. Попробуйте уточнить запрос.', 'info');
+        }
+        renderAddressSuggestions();
+    } catch (error) {
+        console.error('Ошибка поиска адреса:', error);
+        showNotification('Не удалось найти адрес. Попробуйте позже.', 'error');
+    }
+}
+
 function gatherOrderData() {
+    const total = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const phoneValue = state.customerPhone || document.getElementById('customerPhone')?.value.trim() || '';
+    const recipientValue = state.recipientName || document.getElementById('recipientName')?.value.trim() || '';
+    const addressValue = state.deliveryAddress || document.getElementById('deliveryAddress')?.value.trim() || '';
+    
     return {
-        items: state.cart,
-        total: state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+        items: state.cart.map(item => ({
+            id: item.id,
+            name: item.name,
+            quantity: item.quantity,
+            price: item.price
+        })),
+        total,
         user: tg?.initDataUnsafe?.user || null,
         timestamp: new Date().toISOString(),
         cutlery: state.cutleryCount,
-        paymentMethod: document.getElementById('paymentMethod').value,
-        phone: document.getElementById('customerPhone').value,
-        deliveryType: document.querySelector('input[name="deliveryType"]:checked')?.value,
-        recipientName: document.getElementById('recipientName').value.trim(),
-        address: document.getElementById('deliveryAddress').value.trim()
+        paymentMethod: state.paymentMethod,
+        phone: phoneValue,
+        deliveryType: state.deliveryType,
+        recipientName: recipientValue,
+        address: addressValue
     };
 }
 
@@ -398,6 +545,10 @@ function sendOrderData() {
     try {
         if (state.cart.length === 0) {
             showNotification('Корзина пуста. Добавьте товары в корзину.', 'error');
+            return;
+        }
+        
+        if (!validateCheckout()) {
             return;
         }
         
@@ -418,6 +569,18 @@ function sendOrderData() {
         }
         
         state.cart = [];
+        state.cutleryCount = 0;
+        state.customerPhone = '';
+        state.recipientName = '';
+        state.deliveryAddress = PICKUP_ADDRESS;
+        state.deliveryType = 'pickup';
+        state.addressSuggestions = [];
+        document.getElementById('customerPhone').value = '';
+        document.getElementById('recipientName').value = '';
+        document.getElementById('deliveryAddress').value = PICKUP_ADDRESS;
+        setDeliveryMode('pickup');
+        renderAddressSuggestions();
+        
         saveCartToStorage();
         updateCartUI();
         document.getElementById('cartSidebar').classList.remove('open');
@@ -462,7 +625,9 @@ function setupEventListeners() {
             showNotification('Корзина пуста. Добавьте товары в корзину.', 'error');
             return;
         }
+        document.getElementById('cartSidebar').classList.remove('open');
         document.getElementById('checkoutSidebar').classList.add('open');
+        updateCheckoutSummary();
     };
     
     document.getElementById('confirmOrderBtn').onclick = sendOrderData;
@@ -470,7 +635,47 @@ function setupEventListeners() {
     document.getElementById('cutleryMinus').addEventListener('click', () => updateCutlery(-1));
     document.getElementById('cutleryPlus').addEventListener('click', () => updateCutlery(1));
     document.getElementById('requestPhoneBtn').addEventListener('click', requestPhoneNumber);
-    document.getElementById('searchAddressBtn').addEventListener('click', () => showNotification('Поиск адреса пока в разработке', 'info'));
+    document.getElementById('searchAddressBtn').addEventListener('click', searchAddress);
+    document.getElementById('editCartBtn').addEventListener('click', () => {
+        document.getElementById('checkoutSidebar').classList.remove('open');
+        document.getElementById('cartSidebar').classList.add('open');
+    });
+    document.getElementById('paymentMethod').addEventListener('change', (e) => {
+        state.paymentMethod = e.target.value;
+    });
+    document.querySelectorAll('input[name="deliveryType"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            setDeliveryMode(e.target.value);
+        });
+    });
+    const phoneInput = document.getElementById('customerPhone');
+    phoneInput.addEventListener('input', (e) => {
+        state.customerPhone = e.target.value;
+        setFieldError(phoneInput, false);
+    });
+    const recipientInput = document.getElementById('recipientName');
+    recipientInput.addEventListener('input', (e) => {
+        state.recipientName = e.target.value;
+        setFieldError(recipientInput, false);
+    });
+    const deliveryAddressInput = document.getElementById('deliveryAddress');
+    deliveryAddressInput.addEventListener('input', (e) => {
+        state.deliveryAddress = e.target.value;
+        setFieldError(deliveryAddressInput, false);
+        if (!e.target.value.trim()) {
+            state.addressSuggestions = [];
+            renderAddressSuggestions();
+        }
+    });
+    document.getElementById('addressSuggestions').addEventListener('click', (e) => {
+        const target = e.target.closest('.address-suggestion');
+        if (!target) return;
+        const value = target.dataset.address;
+        document.getElementById('deliveryAddress').value = value;
+        state.deliveryAddress = value;
+        state.addressSuggestions = [];
+        renderAddressSuggestions();
+    });
     
     // Модальное окно блюда
     document.getElementById('closeItemModal').addEventListener('click', closeItemModal);
@@ -491,6 +696,62 @@ function setupEventListeners() {
             }
         }
     });
+}
+
+function setFieldError(element, hasError) {
+    if (!element) return;
+    if (hasError) {
+        element.classList.add('input-error');
+    } else {
+        element.classList.remove('input-error');
+    }
+}
+
+function validateCheckout() {
+    const errors = [];
+    const nameInput = document.getElementById('recipientName');
+    const phoneInput = document.getElementById('customerPhone');
+    const addressInput = document.getElementById('deliveryAddress');
+    
+    setFieldError(nameInput, false);
+    setFieldError(phoneInput, false);
+    setFieldError(addressInput, false);
+    
+    const phoneValue = phoneInput.value.trim();
+    const nameValue = nameInput.value.trim();
+    const addressValue = addressInput.value.trim();
+    
+    if (!nameValue) {
+        errors.push('Укажите имя получателя.');
+        setFieldError(nameInput, true);
+    } else {
+        state.recipientName = nameValue;
+    }
+    
+    if (!phoneValue || !/^\+?\d[\d\s\-()]{9,}$/.test(phoneValue)) {
+        errors.push('Введите корректный номер телефона.');
+        setFieldError(phoneInput, true);
+    } else {
+        state.customerPhone = phoneValue;
+    }
+    
+    if (state.deliveryType === 'delivery') {
+        if (!addressValue) {
+            errors.push('Укажите адрес доставки.');
+            setFieldError(addressInput, true);
+        } else {
+            state.deliveryAddress = addressValue;
+        }
+    } else {
+        state.deliveryAddress = PICKUP_ADDRESS;
+    }
+    
+    if (errors.length) {
+        errors.forEach(err => showNotification(err, 'error'));
+        return false;
+    }
+    
+    return true;
 }
 
 // ЗАПУСК ПРИЛОЖЕНИЯ

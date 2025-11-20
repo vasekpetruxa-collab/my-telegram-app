@@ -77,41 +77,63 @@
                 <button class="close-cart" id="closeCheckout">✕</button>
             </div>
             <div class="checkout-content">
-                <div class="form-group">
-                    <label>Способ оплаты</label>
-                    <select id="paymentMethod">
-                        <option value="cod">При получении</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Номер телефона</label>
-                    <div class="phone-row">
-                        <input type="text" id="customerPhone" placeholder="+7 (___) ___-__-__" readonly>
-                        <button class="secondary-btn" id="requestPhoneBtn">Добавить номер</button>
+                <section class="checkout-summary">
+                    <div class="summary-header">
+                        <h3>Ваш заказ</h3>
+                        <button class="secondary-btn outline" id="editCartBtn">Изменить</button>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label>Тип доставки</label>
-                    <div class="delivery-type">
-                        <label>
-                            <input type="radio" name="deliveryType" value="pickup" checked>
-                            Самовывоз
-                        </label>
-                        <label>
-                            <input type="radio" name="deliveryType" value="delivery">
-                            Доставка
-                        </label>
+                    <div id="checkoutSummary" class="summary-list"></div>
+                    <div class="summary-row">
+                        <span>Приборы</span>
+                        <span id="summaryCutlery">0 шт.</span>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label>Имя получателя</label>
-                    <input type="text" id="recipientName" placeholder="Имя">
-                </div>
-                <div class="form-group">
-                    <label>Адрес</label>
-                    <input type="text" id="deliveryAddress" placeholder="Введите адрес для поиска">
-                    <button class="secondary-btn" id="searchAddressBtn">Найти адрес</button>
-                </div>
+                    <div class="summary-row total">
+                        <span>Итого</span>
+                        <span id="summaryTotal">0 ₽</span>
+                    </div>
+                </section>
+                <section class="checkout-form">
+                    <div class="form-group">
+                        <label>Способ оплаты</label>
+                        <select id="paymentMethod">
+                            <option value="cod">При получении</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Номер телефона</label>
+                        <div class="phone-row">
+                            <input type="tel" id="customerPhone" placeholder="+7 (___) ___-__-__">
+                            <button class="secondary-btn" id="requestPhoneBtn">Добавить номер</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Тип доставки</label>
+                        <div class="delivery-type">
+                            <label>
+                                <input type="radio" name="deliveryType" value="pickup" checked>
+                                Самовывоз
+                            </label>
+                            <label>
+                                <input type="radio" name="deliveryType" value="delivery">
+                                Доставка
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Имя получателя</label>
+                        <input type="text" id="recipientName" placeholder="Имя">
+                    </div>
+                    <div class="form-group address-group" id="addressGroup">
+                        <label>Адрес</label>
+                        <input type="text" id="deliveryAddress" placeholder="Введите адрес для поиска">
+                        <button class="secondary-btn" id="searchAddressBtn">Найти адрес</button>
+                        <div id="addressSuggestions" class="address-suggestions"></div>
+                        <div id="pickupInfo" class="pickup-info hidden">
+                            Забрать заказ можно по адресу:<br>
+                            г. Шахты, ул. Советская, дом 235 «Бункер»
+                        </div>
+                    </div>
+                </section>
             </div>
             <div class="checkout-footer">
                 <button class="order-btn" id="confirmOrderBtn">Отправить заказ</button>
