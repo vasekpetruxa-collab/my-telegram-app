@@ -6,7 +6,7 @@
     </style>
     <title>Меню ресторана</title>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -47,7 +47,10 @@
         <div class="cart-sidebar" id="cartSidebar">
             <div class="cart-header">
                 <h2>Ваш заказ</h2>
-                <button class="close-cart" id="closeCart">✕</button>
+                <div class="cart-header-actions">
+                    <button class="clear-cart-btn" id="clearCartBtn" title="Очистить корзину">🗑️</button>
+                    <button class="close-cart" id="closeCart">✕</button>
+                </div>
             </div>
             <div class="cart-items" id="cartItems">
                 <!-- товары в корзине -->
@@ -87,6 +90,10 @@
                         <span>Приборы</span>
                         <span id="summaryCutlery">0 шт.</span>
                     </div>
+                    <div id="deliveryInfo" class="summary-row delivery-info hidden">
+                        <span>Доставка</span>
+                        <span id="deliveryCost">0 ₽</span>
+                    </div>
                     <div class="summary-row total">
                         <span>Итого</span>
                         <span id="summaryTotal">0 ₽</span>
@@ -124,10 +131,7 @@
                         <input type="text" id="recipientName" placeholder="Имя">
                     </div>
                     <div class="form-group address-group" id="addressGroup">
-                        <label>Адрес</label>
-                        <input type="text" id="deliveryAddress" placeholder="Введите адрес для поиска">
-                        <button class="secondary-btn" id="searchAddressBtn">Найти адрес</button>
-                        <div id="addressSuggestions" class="address-suggestions"></div>
+                        <button class="secondary-btn" id="addressDetailsBtn" style="width: 100%;">Детали адреса доставки</button>
                         <div id="pickupInfo" class="pickup-info hidden">
                             Забрать заказ можно по адресу:<br>
                             г. Шахты, ул. Советская, дом 235 «Бункер»
@@ -142,6 +146,47 @@
 
         <!-- TOAST УВЕДОМЛЕНИЯ -->
         <div class="toast-container" id="toastContainer"></div>
+
+        <!-- МОДАЛЬНОЕ ОКНО ДЕТАЛЬНОГО АДРЕСА -->
+        <div class="item-modal" id="addressDetailsModal" aria-hidden="true">
+            <div class="item-modal-dialog">
+                <button class="modal-close" id="closeAddressDetailsModal" aria-label="Закрыть">✕</button>
+                <div class="modal-content">
+                    <h3>Детали адреса доставки</h3>
+                    <div class="form-group">
+                        <label>Адрес *</label>
+                        <input type="text" id="addressStreet" placeholder="Улица, дом" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Название адреса</label>
+                        <input type="text" id="addressName" placeholder="Например: Дом, Работа">
+                    </div>
+                    <div class="form-group">
+                        <label>Квартира / Офис</label>
+                        <input type="text" id="addressApartment" placeholder="Номер квартиры или офиса">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Этаж</label>
+                            <input type="text" id="addressFloor" placeholder="Этаж">
+                        </div>
+                        <div class="form-group">
+                            <label>Подъезд</label>
+                            <input type="text" id="addressEntrance" placeholder="Подъезд">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Код от двери</label>
+                        <input type="text" id="addressDoorCode" placeholder="Код домофона">
+                    </div>
+                    <div class="form-group">
+                        <label>Комментарий курьеру</label>
+                        <textarea id="addressComment" placeholder="Дополнительная информация для курьера" rows="3"></textarea>
+                    </div>
+                    <button class="order-btn modal-add-btn" id="saveAddressDetailsBtn">Сохранить</button>
+                </div>
+            </div>
+        </div>
 
         <!-- МОДАЛЬНОЕ ОКНО БЛЮДА -->
         <div class="item-modal" id="itemModal" aria-hidden="true">

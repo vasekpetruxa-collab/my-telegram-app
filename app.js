@@ -40,6 +40,8 @@ if (window.Telegram && window.Telegram.WebApp) {
 // Состояние приложения
 const defaultCategoryId = menuData?.categories?.[0]?.id || null;
 const PICKUP_ADDRESS = 'г. Шахты, ул. Советская, дом 235 «Бункер»';
+const FREE_DELIVERY_THRESHOLD = 1600;
+const DELIVERY_COST = 150;
 
 let state = {
     cart: [],
@@ -53,7 +55,16 @@ let state = {
     customerPhone: '',
     recipientName: '',
     deliveryAddress: PICKUP_ADDRESS,
-    addressSuggestions: []
+    addressSuggestions: [],
+    addressDetails: {
+        street: '',
+        addressName: '',
+        apartment: '',
+        floor: '',
+        entrance: '',
+        doorCode: '',
+        comment: ''
+    }
 };
 
 function getCartItemQuantity(itemId) {
@@ -113,19 +124,55 @@ function initApp() {
 // РЕНДЕР КАТЕГОРИЙ
 function renderCategories() {
     const categoriesContainer = document.getElementById('categories');
+    if (!categoriesContainer) {
+        console.error('Контейнер категорий не найден');
+        return;
+    }
+    
+    if (!menuData || !menuData.categories) {
+        console.error('Данные категорий не загружены');
+        return;
+    }
+    
     categoriesContainer.innerHTML = '';
     
     menuData.categories.forEach(category => {
         const button = document.createElement('button');
         button.className = `category-btn ${state.currentCategory === category.id ? 'active' : ''}`;
         button.textContent = category.name;
-        button.onclick = () => {
+        button.type = 'button';
+        // Убеждаемся, что данные правильно устанавливаются
+        button.setAttribute('data-category-id', category.id);
+        button.setAttribute('data-category-name', category.name);
+        button.dataset.categoryId = category.id;
+        button.dataset.categoryName = category.name;
+        button.setAttribute('aria-label', `Выбрать категорию ${category.name}`);
+        button.setAttribute('data-has-handler', 'true'); // Помечаем, что есть прямой обработчик
+        
+        // Предотвращаем выделение текста
+        button.addEventListener('mousedown', (e) => {
+            e.preventDefault(); // Предотвращаем выделение текста
+        });
+        
+        button.addEventListener('selectstart', (e) => {
+            e.preventDefault();
+            return false;
+        });
+        
+        // Добавляем прямое событие для надежности
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Прямой клик по категории:', category.id, category.name);
             state.currentCategory = category.id;
             renderCategories();
             renderMenuItems();
-        };
+        });
+        
         categoriesContainer.appendChild(button);
     });
+    
+    console.log(`Отрисовано ${menuData.categories.length} категорий`);
 }
 
 // РЕНДЕР БЛЮД
@@ -275,6 +322,21 @@ function removeFromCart(itemId) {
     updateCartUI();
 }
 
+// КОРЗИНА: ОЧИСТКА ВСЕЙ КОРЗИНЫ
+function clearCart() {
+    if (state.cart.length === 0) {
+        showNotification('Корзина уже пуста', 'info');
+        return;
+    }
+    
+    const itemCount = state.cart.reduce((sum, item) => sum + item.quantity, 0);
+    state.cart = [];
+    state.cutleryCount = 0;
+    saveCartToStorage();
+    updateCartUI();
+    showNotification(`Удалено ${itemCount} ${itemCount === 1 ? 'блюдо' : 'блюд'}`, 'success');
+}
+
 // ОБНОВЛЕНИЕ ИНТЕРФЕЙСА КОРЗИНЫ
 function updateCartUI() {
     // Обновляем счетчик в шапке
@@ -317,6 +379,14 @@ function updateCartUI() {
     updateCheckoutSummary();
 }
 
+function calculateDeliveryCost() {
+    if (state.deliveryType === 'pickup') {
+        return 0;
+    }
+    const subtotal = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    return subtotal >= FREE_DELIVERY_THRESHOLD ? 0 : DELIVERY_COST;
+}
+
 function updateCheckoutSummary() {
     const summaryList = document.getElementById('checkoutSummary');
     if (!summaryList) return;
@@ -341,7 +411,46 @@ function updateCheckoutSummary() {
     }
     
     document.getElementById('summaryCutlery').textContent = `${state.cutleryCount} шт.`;
-    const totalAmount = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    
+    const subtotal = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const deliveryCost = calculateDeliveryCost();
+    const totalAmount = subtotal + deliveryCost;
+    
+    const deliveryInfo = document.getElementById('deliveryInfo');
+    const deliveryCostSpan = document.getElementById('deliveryCost');
+    
+    if (state.deliveryType === 'delivery') {
+        deliveryInfo.classList.remove('hidden');
+        const subtotal = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        if (deliveryCost === 0) {
+            deliveryCostSpan.textContent = 'Бесплатно';
+            deliveryCostSpan.style.color = '#9ef3d3';
+        } else {
+            deliveryCostSpan.textContent = `${deliveryCost} ₽`;
+            deliveryCostSpan.style.color = '#f9fafb';
+            const remaining = FREE_DELIVERY_THRESHOLD - subtotal;
+            if (remaining > 0) {
+                const hint = deliveryInfo.querySelector('.delivery-hint');
+                if (hint) {
+                    hint.textContent = `Добавьте еще ${remaining} ₽ для бесплатной доставки`;
+                } else {
+                    const hintEl = document.createElement('div');
+                    hintEl.className = 'delivery-hint';
+                    hintEl.textContent = `Добавьте еще ${remaining} ₽ для бесплатной доставки`;
+                    hintEl.style.cssText = 'font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 4px; font-weight: normal;';
+                    deliveryInfo.appendChild(hintEl);
+                }
+            } else {
+                const hint = deliveryInfo.querySelector('.delivery-hint');
+                if (hint) hint.remove();
+            }
+        }
+    } else {
+        deliveryInfo.classList.add('hidden');
+        const hint = deliveryInfo.querySelector('.delivery-hint');
+        if (hint) hint.remove();
+    }
+    
     document.getElementById('summaryTotal').textContent = `${totalAmount} ₽`;
 }
 
@@ -367,31 +476,69 @@ function showNotification(message, type = 'success') {
 
 // МОДАЛЬНОЕ ОКНО БЛЮДА
 function openItemModal(itemId) {
-    const item = menuData.items.find(i => i.id === itemId);
-    if (!item) return;
+    if (!itemId) {
+        console.error('openItemModal вызвана без itemId');
+        return;
+    }
     
+    const item = menuData.items.find(i => i.id === itemId);
+    if (!item) {
+        console.error('Товар не найден для itemId:', itemId);
+        return;
+    }
+    
+    // Устанавливаем modalItemId ПЕРЕД всеми остальными операциями
     state.modalItemId = itemId;
-    state.modalQuantity = getCartItemQuantity(itemId) || 1;
+    console.log('Открытие модального окна для товара:', itemId, item.name);
+    
+    const existingQty = getCartItemQuantity(itemId);
+    state.modalQuantity = existingQty > 0 ? existingQty : 1;
     
     const itemImageSrc = resolveItemImage(item);
+    const modalImage = document.getElementById('modalItemImage');
+    const modalName = document.getElementById('modalItemName');
+    const modalDescription = document.getElementById('modalItemDescription');
+    const modalWeight = document.getElementById('modalItemWeight');
+    const modalPrice = document.getElementById('modalItemPrice');
+    const modalQuantity = document.getElementById('modalQuantity');
     
-    document.getElementById('modalItemImage').src = itemImageSrc;
-    document.getElementById('modalItemImage').alt = item.name;
-    document.getElementById('modalItemName').textContent = item.name;
-    document.getElementById('modalItemDescription').textContent = item.description;
-    document.getElementById('modalItemWeight').textContent = item.weight || item.volume || '';
-    document.getElementById('modalItemPrice').textContent = `${item.price} ₽`;
-    document.getElementById('modalQuantity').textContent = state.modalQuantity;
+    if (modalImage) {
+        modalImage.src = itemImageSrc;
+        modalImage.alt = item.name;
+    }
+    if (modalName) modalName.textContent = item.name;
+    if (modalDescription) modalDescription.textContent = item.description;
+    if (modalWeight) modalWeight.textContent = item.weight || item.volume || '';
+    if (modalPrice) modalPrice.textContent = `${item.price} ₽`;
+    if (modalQuantity) modalQuantity.textContent = state.modalQuantity;
     
     const modal = document.getElementById('itemModal');
-    modal.classList.add('open');
-    modal.setAttribute('aria-hidden', 'false');
+    if (modal) {
+        // Сохраняем itemId в data-атрибуте для дополнительной проверки
+        modal.dataset.itemId = itemId;
+        modal.removeAttribute('aria-hidden');
+        modal.classList.add('open');
+        console.log('Модальное окно открыто, modalItemId:', state.modalItemId, 'data-itemId:', modal.dataset.itemId);
+    } else {
+        console.error('Модальное окно не найдено');
+    }
 }
 
 function closeItemModal() {
     const modal = document.getElementById('itemModal');
-    modal.classList.remove('open');
-    modal.setAttribute('aria-hidden', 'true');
+    if (modal) {
+        // Убираем фокус с элементов перед закрытием
+        const activeElement = document.activeElement;
+        if (activeElement && modal.contains(activeElement)) {
+            activeElement.blur();
+        }
+        
+        modal.classList.remove('open');
+        // Устанавливаем aria-hidden только после того, как фокус убран
+        setTimeout(() => {
+            modal.setAttribute('aria-hidden', 'true');
+        }, 100);
+    }
     state.modalItemId = null;
     state.modalQuantity = 1;
 }
@@ -400,13 +547,50 @@ function updateModalQuantity(change) {
     const nextValue = state.modalQuantity + change;
     if (nextValue < 1) return;
     state.modalQuantity = nextValue;
-    document.getElementById('modalQuantity').textContent = state.modalQuantity;
+    const quantityEl = document.getElementById('modalQuantity');
+    if (quantityEl) {
+        quantityEl.textContent = state.modalQuantity;
+    }
+    console.log('Количество обновлено:', state.modalQuantity);
 }
 
 function addModalItemToCart() {
-    if (!state.modalItemId) return;
+    console.log('addModalItemToCart вызвана, modalItemId:', state.modalItemId, 'modalQuantity:', state.modalQuantity);
+    
+    // Пытаемся восстановить modalItemId из data-атрибута модального окна, если он потерян
+    if (!state.modalItemId) {
+        const modal = document.getElementById('itemModal');
+        if (modal && modal.dataset.itemId) {
+            const recoveredItemId = parseInt(modal.dataset.itemId) || modal.dataset.itemId;
+            console.warn('modalItemId восстановлен из data-атрибута:', recoveredItemId);
+            state.modalItemId = recoveredItemId;
+        }
+    }
+    
+    if (!state.modalItemId) {
+        console.error('modalItemId не установлен. Текущее состояние:', {
+            modalItemId: state.modalItemId,
+            modalQuantity: state.modalQuantity,
+            cart: state.cart,
+            modalDataItemId: document.getElementById('itemModal')?.dataset.itemId
+        });
+        showNotification('Ошибка: товар не выбран. Попробуйте закрыть и открыть карточку товара снова.', 'error');
+        return;
+    }
+    
+    // Проверяем, что товар существует
+    const item = menuData.items.find(i => i.id === state.modalItemId);
+    if (!item) {
+        console.error('Товар не найден для modalItemId:', state.modalItemId);
+        showNotification('Ошибка: товар не найден', 'error');
+        state.modalItemId = null;
+        return;
+    }
+    
+    console.log('Добавление в корзину:', state.modalItemId, item.name, 'количество:', state.modalQuantity);
     addItemToCart(state.modalItemId, state.modalQuantity);
     closeItemModal();
+    showNotification('Товар добавлен в корзину', 'success');
 }
 
 // НАСТРОЙКА ОБРАБОТЧИКОВ СОБЫТИЙ
@@ -432,34 +616,31 @@ function requestPhoneNumber() {
 
 function setDeliveryMode(mode) {
     state.deliveryType = mode;
-    const addressInput = document.getElementById('deliveryAddress');
-    const searchBtn = document.getElementById('searchAddressBtn');
-    const suggestions = document.getElementById('addressSuggestions');
+    const addressDetailsBtn = document.getElementById('addressDetailsBtn');
+    const addressGroup = document.getElementById('addressGroup');
     const pickupInfo = document.getElementById('pickupInfo');
     
-    if (!addressInput || !searchBtn || !suggestions || !pickupInfo) {
+    if (!addressGroup || !pickupInfo) {
         return;
     }
     
     if (mode === 'pickup') {
-        addressInput.value = PICKUP_ADDRESS;
-        addressInput.readOnly = true;
-        addressInput.classList.add('hidden');
-        searchBtn.classList.add('hidden');
-        suggestions.classList.add('hidden');
-        suggestions.classList.remove('visible');
+        if (addressDetailsBtn) addressDetailsBtn.classList.add('hidden');
         pickupInfo.classList.remove('hidden');
         state.deliveryAddress = PICKUP_ADDRESS;
-        state.addressSuggestions = [];
-        renderAddressSuggestions();
+        state.addressDetails = {
+            street: '',
+            addressName: '',
+            apartment: '',
+            floor: '',
+            entrance: '',
+            doorCode: '',
+            comment: ''
+        };
     } else {
-        addressInput.readOnly = false;
-        addressInput.classList.remove('hidden');
-        searchBtn.classList.remove('hidden');
-        suggestions.classList.remove('hidden');
+        if (addressDetailsBtn) addressDetailsBtn.classList.remove('hidden');
         pickupInfo.classList.add('hidden');
         if (state.deliveryAddress === PICKUP_ADDRESS) {
-            addressInput.value = '';
             state.deliveryAddress = '';
         }
     }
@@ -517,10 +698,12 @@ async function searchAddress() {
 }
 
 function gatherOrderData() {
-    const total = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const subtotal = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const deliveryCost = calculateDeliveryCost();
+    const total = subtotal + deliveryCost;
     const phoneValue = state.customerPhone || document.getElementById('customerPhone')?.value.trim() || '';
     const recipientValue = state.recipientName || document.getElementById('recipientName')?.value.trim() || '';
-    const addressValue = state.deliveryAddress || document.getElementById('deliveryAddress')?.value.trim() || '';
+    const addressValue = state.deliveryAddress || '';
     
     return {
         items: state.cart.map(item => ({
@@ -529,6 +712,8 @@ function gatherOrderData() {
             quantity: item.quantity,
             price: item.price
         })),
+        subtotal,
+        deliveryCost,
         total,
         user: tg?.initDataUnsafe?.user || null,
         timestamp: new Date().toISOString(),
@@ -537,7 +722,8 @@ function gatherOrderData() {
         phone: phoneValue,
         deliveryType: state.deliveryType,
         recipientName: recipientValue,
-        address: addressValue
+        address: addressValue,
+        addressDetails: state.addressDetails
     };
 }
 
@@ -575,6 +761,14 @@ function sendOrderData() {
         state.deliveryAddress = PICKUP_ADDRESS;
         state.deliveryType = 'pickup';
         state.addressSuggestions = [];
+        state.addressDetails = {
+            addressName: '',
+            apartment: '',
+            floor: '',
+            entrance: '',
+            doorCode: '',
+            comment: ''
+        };
         document.getElementById('customerPhone').value = '';
         document.getElementById('recipientName').value = '';
         document.getElementById('deliveryAddress').value = PICKUP_ADDRESS;
@@ -583,6 +777,7 @@ function sendOrderData() {
         
         saveCartToStorage();
         updateCartUI();
+        updateCheckoutSummary();
         document.getElementById('cartSidebar').classList.remove('open');
         document.getElementById('checkoutSidebar').classList.remove('open');
     } catch (error) {
@@ -592,21 +787,116 @@ function sendOrderData() {
 }
 
 function setupEventListeners() {
+    // Делегирование событий для категорий - работает даже после перерисовки
+    const categoriesContainer = document.getElementById('categories');
+    if (categoriesContainer) {
+        // Обработка mousedown для предотвращения выделения текста
+        categoriesContainer.addEventListener('mousedown', (e) => {
+            const button = e.target.closest('.category-btn');
+            if (button) {
+                e.preventDefault(); // Предотвращаем выделение текста
+            }
+        }, true);
+        
+        // Используем capture phase для более раннего перехвата
+        // Но не обрабатываем, если событие уже обработано прямым обработчиком
+        categoriesContainer.addEventListener('click', (e) => {
+            // Проверяем, не обработано ли уже событие прямым обработчиком
+            if (e.defaultPrevented) return;
+            
+            const button = e.target.closest('.category-btn');
+            if (!button) return;
+            
+            // Проверяем, есть ли прямой обработчик на кнопке
+            // Если есть, не обрабатываем через делегирование
+            const hasDirectHandler = button.getAttribute('data-has-handler') === 'true';
+            if (hasDirectHandler) {
+                // Прямой обработчик уже обработает событие
+                return;
+            }
+            
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Пробуем получить categoryId разными способами
+            const categoryId = button.dataset.categoryId || button.getAttribute('data-category-id');
+            const categoryName = button.dataset.categoryName || button.getAttribute('data-category-name');
+            
+            if (categoryId) {
+                console.log('Клик по категории (делегирование):', categoryId, categoryName);
+                state.currentCategory = categoryId;
+                renderCategories();
+                renderMenuItems();
+            } else {
+                console.warn('Категория не найдена для кнопки:', button, 'dataset:', button.dataset, 'attributes:', {
+                    'data-category-id': button.getAttribute('data-category-id'),
+                    'data-category-name': button.getAttribute('data-category-name')
+                });
+            }
+        }, true); // Capture phase
+        
+        // Также обрабатываем touch события для мобильных устройств
+        categoriesContainer.addEventListener('touchend', (e) => {
+            const button = e.target.closest('.category-btn');
+            if (!button) return;
+            
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const categoryId = button.dataset.categoryId;
+            const categoryName = button.dataset.categoryName;
+            
+            if (categoryId) {
+                console.log('Touch по категории:', categoryId, categoryName);
+                state.currentCategory = categoryId;
+                renderCategories();
+                renderMenuItems();
+            }
+        }, { passive: false });
+        
+        // Предотвращаем выделение текста при клике на категории
+        categoriesContainer.addEventListener('mousedown', (e) => {
+            const button = e.target.closest('.category-btn');
+            if (button) {
+                e.preventDefault(); // Предотвращаем выделение текста
+            }
+        }, true);
+        
+        // Дополнительная обработка selectstart для предотвращения выделения
+        categoriesContainer.addEventListener('selectstart', (e) => {
+            const button = e.target.closest('.category-btn');
+            if (button) {
+                e.preventDefault();
+                return false;
+            }
+        }, true);
+    }
+    
     // Поиск по меню
     const searchInput = document.getElementById('searchInput');
-    searchInput.addEventListener('input', (e) => {
-        state.searchQuery = e.target.value;
-        renderMenuItems();
-    });
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            state.searchQuery = e.target.value;
+            renderMenuItems();
+        });
+    }
     
     // Открытие корзины
-    document.getElementById('cartBtn').onclick = () => {
-        document.getElementById('cartSidebar').classList.add('open');
-    };
+    const cartBtn = document.getElementById('cartBtn');
+    if (cartBtn) {
+        cartBtn.onclick = () => {
+            document.getElementById('cartSidebar').classList.add('open');
+        };
+    }
     
     // Закрытие корзины
     document.getElementById('closeCart').onclick = () => {
         document.getElementById('cartSidebar').classList.remove('open');
+    };
+    
+    // Очистка корзины
+    document.getElementById('clearCartBtn').onclick = () => {
+        clearCart();
     };
     
     // Закрытие корзины по клику на фон
@@ -635,7 +925,6 @@ function setupEventListeners() {
     document.getElementById('cutleryMinus').addEventListener('click', () => updateCutlery(-1));
     document.getElementById('cutleryPlus').addEventListener('click', () => updateCutlery(1));
     document.getElementById('requestPhoneBtn').addEventListener('click', requestPhoneNumber);
-    document.getElementById('searchAddressBtn').addEventListener('click', searchAddress);
     document.getElementById('editCartBtn').addEventListener('click', () => {
         document.getElementById('checkoutSidebar').classList.remove('open');
         document.getElementById('cartSidebar').classList.add('open');
@@ -646,8 +935,50 @@ function setupEventListeners() {
     document.querySelectorAll('input[name="deliveryType"]').forEach(radio => {
         radio.addEventListener('change', (e) => {
             setDeliveryMode(e.target.value);
+            updateCheckoutSummary();
         });
     });
+    
+    // Модальное окно детального адреса
+    const addressDetailsBtn = document.getElementById('addressDetailsBtn');
+    if (addressDetailsBtn) {
+        addressDetailsBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (state.deliveryType === 'pickup') {
+                showNotification('Детали адреса доступны только для доставки', 'info');
+                return;
+            }
+            console.log('Открытие модального окна детального адреса');
+            openAddressDetailsModal();
+        });
+    } else {
+        console.warn('Кнопка "Детали адреса доставки" не найдена');
+    }
+    
+    const closeAddressBtn = document.getElementById('closeAddressDetailsModal');
+    if (closeAddressBtn) {
+        closeAddressBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            closeAddressDetailsModal();
+        });
+    }
+    
+    // Обработчик закрытия по клику на фон - используем делегирование
+    const addressModal = document.getElementById('addressDetailsModal');
+    if (addressModal) {
+        addressModal.addEventListener('click', (e) => {
+            // Закрываем только если клик был именно на фон модального окна
+            if (e.target === addressModal || e.target.id === 'addressDetailsModal') {
+                e.preventDefault();
+                e.stopPropagation();
+                closeAddressDetailsModal();
+            }
+        });
+    }
+    
+    document.getElementById('saveAddressDetailsBtn').addEventListener('click', saveAddressDetails);
     const phoneInput = document.getElementById('customerPhone');
     phoneInput.addEventListener('input', (e) => {
         state.customerPhone = e.target.value;
@@ -658,35 +989,65 @@ function setupEventListeners() {
         state.recipientName = e.target.value;
         setFieldError(recipientInput, false);
     });
-    const deliveryAddressInput = document.getElementById('deliveryAddress');
-    deliveryAddressInput.addEventListener('input', (e) => {
-        state.deliveryAddress = e.target.value;
-        setFieldError(deliveryAddressInput, false);
-        if (!e.target.value.trim()) {
-            state.addressSuggestions = [];
-            renderAddressSuggestions();
-        }
-    });
-    document.getElementById('addressSuggestions').addEventListener('click', (e) => {
-        const target = e.target.closest('.address-suggestion');
-        if (!target) return;
-        const value = target.dataset.address;
-        document.getElementById('deliveryAddress').value = value;
-        state.deliveryAddress = value;
-        state.addressSuggestions = [];
-        renderAddressSuggestions();
-    });
     
-    // Модальное окно блюда
-    document.getElementById('closeItemModal').addEventListener('click', closeItemModal);
-    document.getElementById('itemModal').addEventListener('click', (e) => {
-        if (e.target.id === 'itemModal') {
-            closeItemModal();
-        }
-    });
-    document.getElementById('modalQtyMinus').addEventListener('click', () => updateModalQuantity(-1));
-    document.getElementById('modalQtyPlus').addEventListener('click', () => updateModalQuantity(1));
-    document.getElementById('modalAddBtn').addEventListener('click', addModalItemToCart);
+    // Модальное окно блюда - используем делегирование событий
+    const itemModal = document.getElementById('itemModal');
+    
+    if (itemModal) {
+        // Закрытие по клику на фон
+        itemModal.addEventListener('click', (e) => {
+            if (e.target === itemModal || e.target.id === 'itemModal') {
+                closeItemModal();
+            }
+        });
+        
+        // Делегирование событий для всех кнопок внутри модального окна
+        // Используем capture phase для более раннего перехвата
+        itemModal.addEventListener('click', (e) => {
+            const target = e.target;
+            const button = target.closest('button');
+            
+            if (!button) return;
+            
+            // Кнопка закрытия
+            if (button.id === 'closeItemModal') {
+                e.preventDefault();
+                e.stopPropagation();
+                closeItemModal();
+                return;
+            }
+            
+            // Кнопка уменьшения количества
+            if (button.id === 'modalQtyMinus') {
+                e.preventDefault();
+                e.stopPropagation();
+                updateModalQuantity(-1);
+                return;
+            }
+            
+            // Кнопка увеличения количества
+            if (button.id === 'modalQtyPlus') {
+                e.preventDefault();
+                e.stopPropagation();
+                updateModalQuantity(1);
+                return;
+            }
+            
+            // Кнопка добавления в корзину
+            if (button.id === 'modalAddBtn') {
+                e.preventDefault();
+                e.stopPropagation();
+                // Проверяем modalItemId перед вызовом
+                if (!state.modalItemId) {
+                    console.error('modalItemId не установлен при клике на кнопку добавления');
+                    showNotification('Ошибка: товар не выбран. Попробуйте закрыть и открыть карточку товара снова.', 'error');
+                    return;
+                }
+                addModalItemToCart();
+                return;
+            }
+        }, true); // Capture phase
+    }
     
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
@@ -696,6 +1057,106 @@ function setupEventListeners() {
             }
         }
     });
+}
+
+function openAddressDetailsModal() {
+    const modal = document.getElementById('addressDetailsModal');
+    if (!modal) {
+        console.error('Модальное окно адреса не найдено');
+        return;
+    }
+    
+    const streetInput = document.getElementById('addressStreet');
+    const addressNameInput = document.getElementById('addressName');
+    const apartmentInput = document.getElementById('addressApartment');
+    const floorInput = document.getElementById('addressFloor');
+    const entranceInput = document.getElementById('addressEntrance');
+    const doorCodeInput = document.getElementById('addressDoorCode');
+    const commentInput = document.getElementById('addressComment');
+    
+    if (streetInput) streetInput.value = state.addressDetails.street || state.deliveryAddress || '';
+    if (addressNameInput) addressNameInput.value = state.addressDetails.addressName || '';
+    if (apartmentInput) apartmentInput.value = state.addressDetails.apartment || '';
+    if (floorInput) floorInput.value = state.addressDetails.floor || '';
+    if (entranceInput) entranceInput.value = state.addressDetails.entrance || '';
+    if (doorCodeInput) doorCodeInput.value = state.addressDetails.doorCode || '';
+    if (commentInput) commentInput.value = state.addressDetails.comment || '';
+    
+    // Убираем aria-hidden перед открытием, чтобы избежать конфликтов с фокусом
+    modal.removeAttribute('aria-hidden');
+    modal.classList.add('open');
+    
+    // Убеждаемся, что все поля доступны для ввода
+    const allInputs = modal.querySelectorAll('input, textarea');
+    allInputs.forEach(input => {
+        input.removeAttribute('readonly');
+        input.removeAttribute('disabled');
+        input.style.pointerEvents = 'auto';
+        input.style.cursor = 'text';
+        input.style.opacity = '1';
+        input.tabIndex = 0;
+    });
+    
+    // Фокусируемся на первом поле после небольшой задержки
+    setTimeout(() => {
+        if (streetInput) {
+            streetInput.focus();
+            streetInput.click(); // Дополнительный клик для активации
+        }
+    }, 150);
+}
+
+function closeAddressDetailsModal() {
+    const modal = document.getElementById('addressDetailsModal');
+    if (modal) {
+        // Убираем фокус с элементов перед закрытием
+        const activeElement = document.activeElement;
+        if (activeElement && modal.contains(activeElement)) {
+            activeElement.blur();
+        }
+        
+        modal.classList.remove('open');
+        // Устанавливаем aria-hidden только после того, как фокус убран
+        setTimeout(() => {
+            modal.setAttribute('aria-hidden', 'true');
+        }, 100);
+    }
+}
+
+function saveAddressDetails() {
+    const streetInput = document.getElementById('addressStreet');
+    const addressNameInput = document.getElementById('addressName');
+    const apartmentInput = document.getElementById('addressApartment');
+    const floorInput = document.getElementById('addressFloor');
+    const entranceInput = document.getElementById('addressEntrance');
+    const doorCodeInput = document.getElementById('addressDoorCode');
+    const commentInput = document.getElementById('addressComment');
+    
+    const streetValue = streetInput ? streetInput.value.trim() : '';
+    
+    if (!streetValue) {
+        showNotification('Пожалуйста, укажите адрес', 'error');
+        if (streetInput) {
+            streetInput.focus();
+            setFieldError(streetInput, true);
+        }
+        return;
+    }
+    
+    state.deliveryAddress = streetValue;
+    state.addressDetails = {
+        street: streetValue,
+        addressName: addressNameInput ? addressNameInput.value.trim() : '',
+        apartment: apartmentInput ? apartmentInput.value.trim() : '',
+        floor: floorInput ? floorInput.value.trim() : '',
+        entrance: entranceInput ? entranceInput.value.trim() : '',
+        doorCode: doorCodeInput ? doorCodeInput.value.trim() : '',
+        comment: commentInput ? commentInput.value.trim() : ''
+    };
+    
+    if (streetInput) setFieldError(streetInput, false);
+    closeAddressDetailsModal();
+    showNotification('Адрес сохранен', 'success');
 }
 
 function setFieldError(element, hasError) {
@@ -711,36 +1172,29 @@ function validateCheckout() {
     const errors = [];
     const nameInput = document.getElementById('recipientName');
     const phoneInput = document.getElementById('customerPhone');
-    const addressInput = document.getElementById('deliveryAddress');
+    if (nameInput) setFieldError(nameInput, false);
+    if (phoneInput) setFieldError(phoneInput, false);
     
-    setFieldError(nameInput, false);
-    setFieldError(phoneInput, false);
-    setFieldError(addressInput, false);
-    
-    const phoneValue = phoneInput.value.trim();
-    const nameValue = nameInput.value.trim();
-    const addressValue = addressInput.value.trim();
+    const phoneValue = phoneInput ? phoneInput.value.trim() : '';
+    const nameValue = nameInput ? nameInput.value.trim() : '';
     
     if (!nameValue) {
         errors.push('Укажите имя получателя.');
-        setFieldError(nameInput, true);
+        if (nameInput) setFieldError(nameInput, true);
     } else {
         state.recipientName = nameValue;
     }
     
     if (!phoneValue || !/^\+?\d[\d\s\-()]{9,}$/.test(phoneValue)) {
         errors.push('Введите корректный номер телефона.');
-        setFieldError(phoneInput, true);
+        if (phoneInput) setFieldError(phoneInput, true);
     } else {
         state.customerPhone = phoneValue;
     }
     
     if (state.deliveryType === 'delivery') {
-        if (!addressValue) {
-            errors.push('Укажите адрес доставки.');
-            setFieldError(addressInput, true);
-        } else {
-            state.deliveryAddress = addressValue;
+        if (!state.deliveryAddress || !state.deliveryAddress.trim()) {
+            errors.push('Укажите адрес доставки. Нажмите "Детали адреса доставки" для заполнения.');
         }
     } else {
         state.deliveryAddress = PICKUP_ADDRESS;
