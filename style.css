@@ -410,8 +410,19 @@ body {
     pointer-events: all;
 }
 
-.item-modal.open * {
-    pointer-events: auto;
+.item-modal.open .item-modal-dialog {
+    pointer-events: auto !important;
+}
+
+.item-modal.open .item-modal-dialog * {
+    pointer-events: auto !important;
+}
+
+.item-modal.open button {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    z-index: 100 !important;
+    position: relative;
 }
 
 /* Модальное окно адреса должно быть поверх всего */
@@ -449,12 +460,14 @@ body {
     color: #f9fafb;
     pointer-events: auto;
     z-index: 1;
+    padding: 0;
+    margin: 0;
 }
 
 .modal-close {
     position: absolute;
     top: 12px;
-    right: 12px;
+    left: 12px;
     background: rgba(255,255,255,0.1);
     border: 1px solid rgba(255,255,255,0.2);
     color: white;
@@ -464,8 +477,20 @@ body {
     height: 36px;
     cursor: pointer;
     font-size: 18px;
-    z-index: 10;
+    line-height: 1;
+    z-index: 100;
     transition: all 0.2s;
+    pointer-events: auto !important;
+    touch-action: manipulation;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    min-width: 36px;
+    min-height: 36px;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 .modal-close:hover {
@@ -486,10 +511,18 @@ body {
 
 .modal-content {
     padding: 0 20px 20px;
+    padding-top: 0;
+    padding-left: 60px;
     display: flex;
     flex-direction: column;
     gap: 12px;
     color: #f9fafb;
+    position: relative;
+    z-index: 1;
+    margin-top: 0;
+    width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
 }
 
 .modal-content h3 {
@@ -497,6 +530,8 @@ body {
     font-size: 22px;
     font-weight: 700;
     margin-bottom: 8px;
+    margin-top: 0;
+    padding-top: 0;
 }
 
 .modal-content p {
@@ -911,12 +946,18 @@ body {
     display: flex;
     flex-direction: column;
     gap: 6px;
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .form-group label {
     font-weight: 600;
     font-size: 14px;
     color: #f9fafb;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
 }
 
 .form-group input,
@@ -931,6 +972,9 @@ body {
     transition: all 0.2s;
     font-family: inherit;
     resize: vertical;
+    width: 100%;
+    box-sizing: border-box;
+    min-width: 0;
 }
 
 .form-group textarea {
@@ -955,6 +999,13 @@ body {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.form-row .form-group {
+    min-width: 0;
+    overflow: hidden;
 }
 
 .form-group select option {
@@ -998,6 +1049,8 @@ body {
 .delivery-type {
     display: flex;
     gap: 15px;
+    flex-wrap: nowrap;
+    align-items: center;
 }
 
 .delivery-type label {
@@ -1012,6 +1065,9 @@ body {
     background: rgba(255,255,255,0.05);
     transition: all 0.2s;
     cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    min-width: fit-content;
 }
 
 .delivery-type label:hover {
@@ -1110,10 +1166,6 @@ body {
     background: rgba(255,255,255,0.1);
 }
 
-.delivery-type {
-    display: flex;
-    gap: 15px;
-}
 /* TOAST УВЕДОМЛЕНИЯ */
 .toast-container {
     position: fixed;

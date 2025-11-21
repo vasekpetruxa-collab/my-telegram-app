@@ -557,7 +557,7 @@ const menuData = {
             weight: "280г"
         },
         {
-            id: 49,
+            id: 52,
             category: "deserts",
             name: "Цезарь",
             description: "Курица, салат, сухарики, соус цезарь",

@@ -107,6 +107,13 @@ function loadCartFromStorage() {
 
 // ИНИЦИАЛИЗАЦИЯ ПРИЛОЖЕНИЯ
 function initApp() {
+    // Проверяем, что menuData загружен
+    if (typeof menuData === 'undefined' || !menuData || !menuData.categories || !menuData.items) {
+        console.error('menuData не загружен. Убедитесь, что data.js подключен перед app.js');
+        showNotification('Ошибка загрузки данных меню', 'error');
+        return;
+    }
+    
     loadCartFromStorage(); // Загружаем корзину из localStorage
     if (!state.currentCategory) {
         state.currentCategory = defaultCategoryId;
@@ -114,9 +121,13 @@ function initApp() {
     if (state.deliveryType === 'pickup') {
         state.deliveryAddress = PICKUP_ADDRESS;
     }
+    
+    // Устанавливаем обработчики
+    setupEventListeners();
+    setupItemModalHandlers(); // Устанавливаем обработчики модального окна
+    
     renderCategories();
     renderMenuItems();
-    setupEventListeners();
     setDeliveryMode(state.deliveryType);
     updateCartUI();
 }
@@ -159,15 +170,36 @@ function renderCategories() {
             return false;
         });
         
-        // Добавляем прямое событие для надежности
-        button.addEventListener('click', (e) => {
+        // Добавляем обработчик клика
+        button.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            console.log('Прямой клик по категории:', category.id, category.name);
-            state.currentCategory = category.id;
-            renderCategories();
-            renderMenuItems();
-        });
+            console.log('Клик по категории:', category.id, category.name);
+            
+            // Используем замыкание для сохранения category.id
+            const categoryId = category.id;
+            if (categoryId) {
+                state.currentCategory = categoryId;
+                renderCategories();
+                renderMenuItems();
+            } else {
+                console.error('ID категории не найден:', category);
+            }
+        }, { capture: false });
+        
+        // Обработчик для touch событий (мобильные устройства)
+        button.addEventListener('touchend', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Touch по категории:', category.id, category.name);
+            
+            const categoryId = category.id;
+            if (categoryId) {
+                state.currentCategory = categoryId;
+                renderCategories();
+                renderMenuItems();
+            }
+        }, { passive: false, capture: false });
         
         categoriesContainer.appendChild(button);
     });
@@ -182,7 +214,13 @@ function renderMenuItems() {
     
     // Фильтруем блюда по категории и поисковому запросу
     let itemsToShow = state.currentCategory 
-        ? menuData.items.filter(item => item.category === state.currentCategory)
+        ? menuData.items.filter(item => {
+            const matches = item.category === state.currentCategory;
+            if (!matches && state.currentCategory) {
+                console.log('Не совпадает категория:', item.category, '!==', state.currentCategory);
+            }
+            return matches;
+        })
         : menuData.items;
     
     // Применяем поиск
@@ -196,10 +234,22 @@ function renderMenuItems() {
     
     // Группируем по категориям
     const categories = state.currentCategory 
-        ? [menuData.categories.find(cat => cat.id === state.currentCategory)]
+        ? [menuData.categories.find(cat => {
+            const matches = cat.id === state.currentCategory;
+            if (!matches) {
+                console.log('Категория не найдена:', cat.id, '!==', state.currentCategory);
+            }
+            return matches;
+        })].filter(Boolean) // Убираем undefined
         : menuData.categories;
     
+    if (state.currentCategory && categories.length === 0) {
+        console.error('Категория не найдена:', state.currentCategory);
+        console.log('Доступные категории:', menuData.categories.map(c => c.id));
+    }
+    
     categories.forEach(category => {
+        if (!category) return;
         const categoryItems = itemsToShow.filter(item => item.category === category.id);
         
         if (categoryItems.length > 0) {
@@ -341,7 +391,10 @@ function clearCart() {
 function updateCartUI() {
     // Обновляем счетчик в шапке
     const totalItems = state.cart.reduce((sum, item) => sum + item.quantity, 0);
-    document.querySelector('.cart-count').textContent = totalItems;
+    const cartCountEl = document.querySelector('.cart-count');
+    if (cartCountEl) {
+        cartCountEl.textContent = totalItems;
+    }
     
     // Обновляем список товаров в корзине
     const cartItemsContainer = document.getElementById('cartItems');
@@ -353,7 +406,7 @@ function updateCartUI() {
         const itemImageSrc = resolveItemImage(item);
         cartItem.innerHTML = `
             <div class="cart-item-thumb">
-                <img src="${itemImageSrc}" alt="${item.name}">
+                <img src="${itemImageSrc}" alt="${item.name}" onerror="this.src='./assets/images/categories/placeholder.jpg'">
             </div>
             <div class="cart-item-body">
                 <div class="cart-item-row">
@@ -362,20 +415,29 @@ function updateCartUI() {
                 </div>
                 <div class="cart-item-description">${item.description}</div>
                 <div class="cart-item-controls">
-                    <button class="quantity-btn" onclick="updateCartQuantity(${item.id}, -1)">-</button>
+                    <button class="quantity-btn" data-item-id="${item.id}" data-action="decrease">-</button>
                     <span>${item.quantity}</span>
-                    <button class="quantity-btn" onclick="updateCartQuantity(${item.id}, 1)">+</button>
+                    <button class="quantity-btn" data-item-id="${item.id}" data-action="increase">+</button>
                     <div class="cart-item-total">${item.price * item.quantity} ₽</div>
                 </div>
             </div>
         `;
+        
+        // Добавляем обработчики событий для кнопок количества
+        const decreaseBtn = cartItem.querySelector('[data-action="decrease"]');
+        const increaseBtn = cartItem.querySelector('[data-action="increase"]');
+        decreaseBtn.addEventListener('click', () => updateCartQuantity(item.id, -1));
+        increaseBtn.addEventListener('click', () => updateCartQuantity(item.id, 1));
+        
         cartItemsContainer.appendChild(cartItem);
     });
     
     // Обновляем общую сумму
     const totalAmount = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    document.getElementById('totalAmount').textContent = totalAmount;
-    document.getElementById('cutleryCount').textContent = state.cutleryCount;
+    const totalAmountEl = document.getElementById('totalAmount');
+    const cutleryCountEl = document.getElementById('cutleryCount');
+    if (totalAmountEl) totalAmountEl.textContent = totalAmount;
+    if (cutleryCountEl) cutleryCountEl.textContent = state.cutleryCount;
     updateCheckoutSummary();
 }
 
@@ -410,7 +472,8 @@ function updateCheckoutSummary() {
         });
     }
     
-    document.getElementById('summaryCutlery').textContent = `${state.cutleryCount} шт.`;
+    const summaryCutleryEl = document.getElementById('summaryCutlery');
+    if (summaryCutleryEl) summaryCutleryEl.textContent = `${state.cutleryCount} шт.`;
     
     const subtotal = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const deliveryCost = calculateDeliveryCost();
@@ -451,7 +514,8 @@ function updateCheckoutSummary() {
         if (hint) hint.remove();
     }
     
-    document.getElementById('summaryTotal').textContent = `${totalAmount} ₽`;
+    const summaryTotalEl = document.getElementById('summaryTotal');
+    if (summaryTotalEl) summaryTotalEl.textContent = `${totalAmount} ₽`;
 }
 
 // УВЕДОМЛЕНИЯ (TOAST)
@@ -516,9 +580,24 @@ function openItemModal(itemId) {
     if (modal) {
         // Сохраняем itemId в data-атрибуте для дополнительной проверки
         modal.dataset.itemId = itemId;
+        // Убираем inert и aria-hidden перед открытием
+        modal.removeAttribute('inert');
         modal.removeAttribute('aria-hidden');
         modal.classList.add('open');
-        console.log('Модальное окно открыто, modalItemId:', state.modalItemId, 'data-itemId:', modal.dataset.itemId);
+        
+        // Проверяем, что все элементы на месте
+        const closeBtn = document.getElementById('closeItemModal');
+        const minusBtn = document.getElementById('modalQtyMinus');
+        const plusBtn = document.getElementById('modalQtyPlus');
+        const addBtn = document.getElementById('modalAddBtn');
+        
+        console.log('Модальное окно открыто, modalItemId:', state.modalItemId);
+        console.log('Элементы модального окна:', {
+            closeBtn: !!closeBtn,
+            minusBtn: !!minusBtn,
+            plusBtn: !!plusBtn,
+            addBtn: !!addBtn
+        });
     } else {
         console.error('Модальное окно не найдено');
     }
@@ -526,21 +605,115 @@ function openItemModal(itemId) {
 
 function closeItemModal() {
     const modal = document.getElementById('itemModal');
-    if (modal) {
-        // Убираем фокус с элементов перед закрытием
-        const activeElement = document.activeElement;
-        if (activeElement && modal.contains(activeElement)) {
-            activeElement.blur();
-        }
-        
-        modal.classList.remove('open');
-        // Устанавливаем aria-hidden только после того, как фокус убран
-        setTimeout(() => {
-            modal.setAttribute('aria-hidden', 'true');
-        }, 100);
+    if (!modal) {
+        state.modalItemId = null;
+        state.modalQuantity = 1;
+        return;
     }
+    
+    // Убираем фокус со всех элементов внутри модального окна
+    const activeElement = document.activeElement;
+    if (activeElement && modal.contains(activeElement)) {
+        activeElement.blur();
+    }
+    
+    // Убираем фокус со всех интерактивных элементов в модальном окне
+    const allInputs = modal.querySelectorAll('input, textarea, button, select');
+    allInputs.forEach(input => {
+        if (input === document.activeElement) {
+            input.blur();
+        }
+    });
+    
+    // Закрываем модальное окно визуально
+    modal.classList.remove('open');
+    
+    // Используем inert атрибут вместо aria-hidden для предотвращения фокуса
+    // inert автоматически управляет фокусом и доступностью
+    requestAnimationFrame(() => {
+        modal.setAttribute('inert', '');
+        modal.setAttribute('aria-hidden', 'true');
+    });
+    
     state.modalItemId = null;
     state.modalQuantity = 1;
+}
+
+// Используем делегирование событий на уровне document для надежности
+function setupItemModalHandlers() {
+    // Удаляем старые обработчики, если они есть (через именованную функцию)
+    document.removeEventListener('click', handleItemModalClick);
+    
+    // Добавляем новый обработчик
+    document.addEventListener('click', handleItemModalClick);
+    console.log('Обработчики модального окна установлены');
+}
+
+function handleItemModalClick(e) {
+    const itemModal = document.getElementById('itemModal');
+    if (!itemModal || !itemModal.classList.contains('open')) {
+        return; // Модальное окно не открыто
+    }
+    
+    console.log('Клик в модальном окне:', e.target, e.target.id);
+    
+    // Закрытие по клику на фон
+    if (e.target === itemModal) {
+        console.log('Закрытие модального окна по клику на фон');
+        closeItemModal();
+        return;
+    }
+    
+    // Проверяем, кликнули ли мы на кнопку внутри модального окна
+    const button = e.target.closest('button');
+    if (!button) {
+        console.log('Клик не на кнопку:', e.target);
+        return;
+    }
+    
+    if (!itemModal.contains(button)) {
+        console.log('Кнопка не внутри модального окна');
+        return;
+    }
+    
+    console.log('Обработка клика на кнопку:', button.id);
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Кнопка закрытия
+    if (button.id === 'closeItemModal') {
+        console.log('Закрытие модального окна');
+        closeItemModal();
+        return;
+    }
+    
+    // Кнопка уменьшения количества
+    if (button.id === 'modalQtyMinus') {
+        console.log('Уменьшение количества');
+        updateModalQuantity(-1);
+        return;
+    }
+    
+    // Кнопка увеличения количества
+    if (button.id === 'modalQtyPlus') {
+        console.log('Увеличение количества');
+        updateModalQuantity(1);
+        return;
+    }
+    
+    // Кнопка добавления в корзину
+    if (button.id === 'modalAddBtn') {
+        console.log('Добавление в корзину, modalItemId:', state.modalItemId);
+        if (!state.modalItemId) {
+            console.error('modalItemId не установлен при клике на кнопку добавления');
+            showNotification('Ошибка: товар не выбран. Попробуйте закрыть и открыть карточку товара снова.', 'error');
+            return;
+        }
+        addModalItemToCart();
+        return;
+    }
+    
+    console.log('Неизвестная кнопка:', button.id);
 }
 
 function updateModalQuantity(change) {
@@ -619,6 +792,8 @@ function setDeliveryMode(mode) {
     const addressDetailsBtn = document.getElementById('addressDetailsBtn');
     const addressGroup = document.getElementById('addressGroup');
     const pickupInfo = document.getElementById('pickupInfo');
+    const deliveryAddressInput = document.getElementById('deliveryAddress');
+    const searchAddressBtn = document.getElementById('searchAddressBtn');
     
     if (!addressGroup || !pickupInfo) {
         return;
@@ -626,8 +801,12 @@ function setDeliveryMode(mode) {
     
     if (mode === 'pickup') {
         if (addressDetailsBtn) addressDetailsBtn.classList.add('hidden');
+        if (deliveryAddressInput) deliveryAddressInput.classList.add('hidden');
+        if (searchAddressBtn) searchAddressBtn.classList.add('hidden');
         pickupInfo.classList.remove('hidden');
         state.deliveryAddress = PICKUP_ADDRESS;
+        state.addressSuggestions = [];
+        renderAddressSuggestions();
         state.addressDetails = {
             street: '',
             addressName: '',
@@ -639,9 +818,12 @@ function setDeliveryMode(mode) {
         };
     } else {
         if (addressDetailsBtn) addressDetailsBtn.classList.remove('hidden');
+        if (deliveryAddressInput) deliveryAddressInput.classList.remove('hidden');
+        if (searchAddressBtn) searchAddressBtn.classList.remove('hidden');
         pickupInfo.classList.add('hidden');
         if (state.deliveryAddress === PICKUP_ADDRESS) {
             state.deliveryAddress = '';
+            if (deliveryAddressInput) deliveryAddressInput.value = '';
         }
     }
 }
@@ -654,6 +836,7 @@ function renderAddressSuggestions() {
     
     if (state.deliveryType === 'pickup') {
         container.classList.add('hidden');
+        container.classList.remove('visible');
         return;
     }
     
@@ -668,6 +851,16 @@ function renderAddressSuggestions() {
         button.className = 'address-suggestion';
         button.dataset.address = suggestion.display_name;
         button.textContent = suggestion.display_name;
+        button.addEventListener('click', () => {
+            const addressInput = document.getElementById('deliveryAddress');
+            if (addressInput) {
+                addressInput.value = suggestion.display_name;
+                state.deliveryAddress = suggestion.display_name;
+            }
+            state.addressSuggestions = [];
+            renderAddressSuggestions();
+            showNotification('Адрес выбран', 'success');
+        });
         container.appendChild(button);
     });
     
@@ -676,24 +869,61 @@ function renderAddressSuggestions() {
 
 async function searchAddress() {
     const addressInput = document.getElementById('deliveryAddress');
+    if (!addressInput) {
+        console.error('Поле адреса не найдено');
+        return;
+    }
+    
     const query = addressInput.value.trim();
     
     if (!query) {
         showNotification('Введите адрес для поиска.', 'error');
+        addressInput.focus();
+        setFieldError(addressInput, true);
         return;
     }
     
     try {
-        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&accept-language=ru&q=${encodeURIComponent(query)}`);
+        showNotification('Поиск адреса...', 'info');
+        
+        // Добавляем заголовки для соблюдения политики использования API Nominatim
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&accept-language=ru&q=${encodeURIComponent(query)}`, {
+            headers: {
+                'User-Agent': 'TelegramWebApp/1.0',
+                'Referer': window.location.origin
+            }
+        });
+        
+        if (!response.ok) {
+            // Обработка различных HTTP ошибок
+            if (response.status === 503) {
+                throw new Error('Сервис поиска адресов временно недоступен. Пожалуйста, попробуйте позже или введите адрес вручную.');
+            } else if (response.status === 429) {
+                throw new Error('Слишком много запросов. Пожалуйста, подождите немного и попробуйте снова.');
+            } else if (response.status >= 500) {
+                throw new Error('Ошибка сервера. Пожалуйста, попробуйте позже или введите адрес вручную.');
+            } else {
+                throw new Error(`Ошибка при поиске адреса (код ${response.status}). Попробуйте ввести адрес вручную.`);
+            }
+        }
+        
         const data = await response.json();
         state.addressSuggestions = data;
         if (!data.length) {
-            showNotification('Адрес не найден. Попробуйте уточнить запрос.', 'info');
+            showNotification('Адрес не найден. Попробуйте уточнить запрос или введите адрес вручную.', 'info');
+        } else {
+            showNotification(`Найдено ${data.length} вариантов`, 'success');
         }
         renderAddressSuggestions();
     } catch (error) {
         console.error('Ошибка поиска адреса:', error);
-        showNotification('Не удалось найти адрес. Попробуйте позже.', 'error');
+        
+        // Показываем понятное сообщение об ошибке
+        const errorMessage = error.message || 'Не удалось найти адрес. Проверьте подключение к интернету или введите адрес вручную.';
+        showNotification(errorMessage, 'error');
+        
+        state.addressSuggestions = [];
+        renderAddressSuggestions();
     }
 }
 
@@ -744,15 +974,11 @@ function sendOrderData() {
             tg.sendData(JSON.stringify(orderData));
         }
         
+        // Показываем уведомление об успешной отправке заказа
         showNotification(`Заказ отправлен! Сумма: ${orderData.total} ₽`, 'success');
         
-        if (tg?.showPopup) {
-            tg.showPopup({
-                title: 'Заказ отправлен!',
-                message: `Спасибо! Ваш заказ на ${orderData.total} ₽ принят.`,
-                buttons: [{ type: 'ok' }]
-            });
-        }
+        // Метод showPopup не поддерживается в версии 6.0+ Telegram WebApp
+        // Используем только showNotification для уведомлений
         
         state.cart = [];
         state.cutleryCount = 0;
@@ -769,9 +995,12 @@ function sendOrderData() {
             doorCode: '',
             comment: ''
         };
-        document.getElementById('customerPhone').value = '';
-        document.getElementById('recipientName').value = '';
-        document.getElementById('deliveryAddress').value = PICKUP_ADDRESS;
+        const phoneInput = document.getElementById('customerPhone');
+        const recipientInput = document.getElementById('recipientName');
+        const deliveryAddressInput = document.getElementById('deliveryAddress');
+        if (phoneInput) phoneInput.value = '';
+        if (recipientInput) recipientInput.value = '';
+        if (deliveryAddressInput) deliveryAddressInput.value = PICKUP_ADDRESS;
         setDeliveryMode('pickup');
         renderAddressSuggestions();
         
@@ -787,90 +1016,8 @@ function sendOrderData() {
 }
 
 function setupEventListeners() {
-    // Делегирование событий для категорий - работает даже после перерисовки
-    const categoriesContainer = document.getElementById('categories');
-    if (categoriesContainer) {
-        // Обработка mousedown для предотвращения выделения текста
-        categoriesContainer.addEventListener('mousedown', (e) => {
-            const button = e.target.closest('.category-btn');
-            if (button) {
-                e.preventDefault(); // Предотвращаем выделение текста
-            }
-        }, true);
-        
-        // Используем capture phase для более раннего перехвата
-        // Но не обрабатываем, если событие уже обработано прямым обработчиком
-        categoriesContainer.addEventListener('click', (e) => {
-            // Проверяем, не обработано ли уже событие прямым обработчиком
-            if (e.defaultPrevented) return;
-            
-            const button = e.target.closest('.category-btn');
-            if (!button) return;
-            
-            // Проверяем, есть ли прямой обработчик на кнопке
-            // Если есть, не обрабатываем через делегирование
-            const hasDirectHandler = button.getAttribute('data-has-handler') === 'true';
-            if (hasDirectHandler) {
-                // Прямой обработчик уже обработает событие
-                return;
-            }
-            
-            e.preventDefault();
-            e.stopPropagation();
-            
-            // Пробуем получить categoryId разными способами
-            const categoryId = button.dataset.categoryId || button.getAttribute('data-category-id');
-            const categoryName = button.dataset.categoryName || button.getAttribute('data-category-name');
-            
-            if (categoryId) {
-                console.log('Клик по категории (делегирование):', categoryId, categoryName);
-                state.currentCategory = categoryId;
-                renderCategories();
-                renderMenuItems();
-            } else {
-                console.warn('Категория не найдена для кнопки:', button, 'dataset:', button.dataset, 'attributes:', {
-                    'data-category-id': button.getAttribute('data-category-id'),
-                    'data-category-name': button.getAttribute('data-category-name')
-                });
-            }
-        }, true); // Capture phase
-        
-        // Также обрабатываем touch события для мобильных устройств
-        categoriesContainer.addEventListener('touchend', (e) => {
-            const button = e.target.closest('.category-btn');
-            if (!button) return;
-            
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const categoryId = button.dataset.categoryId;
-            const categoryName = button.dataset.categoryName;
-            
-            if (categoryId) {
-                console.log('Touch по категории:', categoryId, categoryName);
-                state.currentCategory = categoryId;
-                renderCategories();
-                renderMenuItems();
-            }
-        }, { passive: false });
-        
-        // Предотвращаем выделение текста при клике на категории
-        categoriesContainer.addEventListener('mousedown', (e) => {
-            const button = e.target.closest('.category-btn');
-            if (button) {
-                e.preventDefault(); // Предотвращаем выделение текста
-            }
-        }, true);
-        
-        // Дополнительная обработка selectstart для предотвращения выделения
-        categoriesContainer.addEventListener('selectstart', (e) => {
-            const button = e.target.closest('.category-btn');
-            if (button) {
-                e.preventDefault();
-                return false;
-            }
-        }, true);
-    }
+    // Обработчики категорий устанавливаются в renderCategories()
+    // Здесь только общие обработчики
     
     // Поиск по меню
     const searchInput = document.getElementById('searchInput');
@@ -979,75 +1126,39 @@ function setupEventListeners() {
     }
     
     document.getElementById('saveAddressDetailsBtn').addEventListener('click', saveAddressDetails);
-    const phoneInput = document.getElementById('customerPhone');
-    phoneInput.addEventListener('input', (e) => {
-        state.customerPhone = e.target.value;
-        setFieldError(phoneInput, false);
-    });
-    const recipientInput = document.getElementById('recipientName');
-    recipientInput.addEventListener('input', (e) => {
-        state.recipientName = e.target.value;
-        setFieldError(recipientInput, false);
-    });
     
-    // Модальное окно блюда - используем делегирование событий
-    const itemModal = document.getElementById('itemModal');
-    
-    if (itemModal) {
-        // Закрытие по клику на фон
-        itemModal.addEventListener('click', (e) => {
-            if (e.target === itemModal || e.target.id === 'itemModal') {
-                closeItemModal();
-            }
-        });
-        
-        // Делегирование событий для всех кнопок внутри модального окна
-        // Используем capture phase для более раннего перехвата
-        itemModal.addEventListener('click', (e) => {
-            const target = e.target;
-            const button = target.closest('button');
-            
-            if (!button) return;
-            
-            // Кнопка закрытия
-            if (button.id === 'closeItemModal') {
-                e.preventDefault();
-                e.stopPropagation();
-                closeItemModal();
-                return;
-            }
-            
-            // Кнопка уменьшения количества
-            if (button.id === 'modalQtyMinus') {
-                e.preventDefault();
-                e.stopPropagation();
-                updateModalQuantity(-1);
-                return;
-            }
-            
-            // Кнопка увеличения количества
-            if (button.id === 'modalQtyPlus') {
-                e.preventDefault();
-                e.stopPropagation();
-                updateModalQuantity(1);
-                return;
-            }
-            
-            // Кнопка добавления в корзину
-            if (button.id === 'modalAddBtn') {
-                e.preventDefault();
-                e.stopPropagation();
-                // Проверяем modalItemId перед вызовом
-                if (!state.modalItemId) {
-                    console.error('modalItemId не установлен при клике на кнопку добавления');
-                    showNotification('Ошибка: товар не выбран. Попробуйте закрыть и открыть карточку товара снова.', 'error');
-                    return;
-                }
-                addModalItemToCart();
-                return;
-            }
-        }, true); // Capture phase
+    // Обработчик поиска адреса
+    const searchAddressBtn = document.getElementById('searchAddressBtn');
+    if (searchAddressBtn) {
+        searchAddressBtn.addEventListener('click', searchAddress);
     }
+    
+    // Обработчик ввода адреса
+    const deliveryAddressInput = document.getElementById('deliveryAddress');
+    if (deliveryAddressInput) {
+        deliveryAddressInput.addEventListener('input', (e) => {
+            state.deliveryAddress = e.target.value;
+            setFieldError(deliveryAddressInput, false);
+        });
+    }
+    
+    const phoneInput = document.getElementById('customerPhone');
+    if (phoneInput) {
+        phoneInput.addEventListener('input', (e) => {
+            state.customerPhone = e.target.value;
+            setFieldError(phoneInput, false);
+        });
+    }
+    const recipientInput = document.getElementById('recipientName');
+    if (recipientInput) {
+        recipientInput.addEventListener('input', (e) => {
+            state.recipientName = e.target.value;
+            setFieldError(recipientInput, false);
+        });
+    }
+    
+    // Модальное окно блюда - используем прямые обработчики
+    setupItemModalHandlers();
     
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
@@ -1082,45 +1193,67 @@ function openAddressDetailsModal() {
     if (doorCodeInput) doorCodeInput.value = state.addressDetails.doorCode || '';
     if (commentInput) commentInput.value = state.addressDetails.comment || '';
     
-    // Убираем aria-hidden перед открытием, чтобы избежать конфликтов с фокусом
+    // Убираем inert и aria-hidden перед открытием
+    modal.removeAttribute('inert');
     modal.removeAttribute('aria-hidden');
-    modal.classList.add('open');
     
     // Убеждаемся, что все поля доступны для ввода
     const allInputs = modal.querySelectorAll('input, textarea');
     allInputs.forEach(input => {
         input.removeAttribute('readonly');
         input.removeAttribute('disabled');
+        input.removeAttribute('tabindex'); // Убираем tabindex=-1, если был установлен
         input.style.pointerEvents = 'auto';
         input.style.cursor = 'text';
         input.style.opacity = '1';
-        input.tabIndex = 0;
+        if (input.tabIndex === -1) {
+            input.tabIndex = 0;
+        }
     });
     
-    // Фокусируемся на первом поле после небольшой задержки
-    setTimeout(() => {
-        if (streetInput) {
-            streetInput.focus();
-            streetInput.click(); // Дополнительный клик для активации
-        }
-    }, 150);
+    // Открываем модальное окно
+    modal.classList.add('open');
+    
+    // Фокусируемся на первом поле после того, как модальное окно открыто
+    // Используем requestAnimationFrame для гарантии, что DOM обновлен
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                if (streetInput) {
+                    streetInput.focus();
+                }
+            }, 50);
+        });
+    });
 }
 
 function closeAddressDetailsModal() {
     const modal = document.getElementById('addressDetailsModal');
-    if (modal) {
-        // Убираем фокус с элементов перед закрытием
-        const activeElement = document.activeElement;
-        if (activeElement && modal.contains(activeElement)) {
-            activeElement.blur();
-        }
-        
-        modal.classList.remove('open');
-        // Устанавливаем aria-hidden только после того, как фокус убран
-        setTimeout(() => {
-            modal.setAttribute('aria-hidden', 'true');
-        }, 100);
+    if (!modal) return;
+    
+    // Убираем фокус со всех элементов внутри модального окна
+    const activeElement = document.activeElement;
+    if (activeElement && modal.contains(activeElement)) {
+        activeElement.blur();
     }
+    
+    // Убираем фокус со всех интерактивных элементов в модальном окне
+    const allInputs = modal.querySelectorAll('input, textarea, button, select');
+    allInputs.forEach(input => {
+        if (input === document.activeElement) {
+            input.blur();
+        }
+    });
+    
+    // Закрываем модальное окно визуально
+    modal.classList.remove('open');
+    
+    // Используем inert атрибут вместо aria-hidden для предотвращения фокуса
+    // inert автоматически управляет фокусом и доступностью
+    requestAnimationFrame(() => {
+        modal.setAttribute('inert', '');
+        modal.setAttribute('aria-hidden', 'true');
+    });
 }
 
 function saveAddressDetails() {
@@ -1172,36 +1305,83 @@ function validateCheckout() {
     const errors = [];
     const nameInput = document.getElementById('recipientName');
     const phoneInput = document.getElementById('customerPhone');
+    const deliveryAddressInput = document.getElementById('deliveryAddress');
+    
+    // Сбрасываем ошибки
     if (nameInput) setFieldError(nameInput, false);
     if (phoneInput) setFieldError(phoneInput, false);
+    if (deliveryAddressInput) setFieldError(deliveryAddressInput, false);
+    
+    // Проверка корзины
+    if (state.cart.length === 0) {
+        errors.push('Корзина пуста. Добавьте товары в корзину.');
+        showNotification('Корзина пуста. Добавьте товары в корзину.', 'error');
+        return false;
+    }
     
     const phoneValue = phoneInput ? phoneInput.value.trim() : '';
     const nameValue = nameInput ? nameInput.value.trim() : '';
     
+    // Валидация имени
     if (!nameValue) {
         errors.push('Укажите имя получателя.');
-        if (nameInput) setFieldError(nameInput, true);
+        if (nameInput) {
+            setFieldError(nameInput, true);
+            nameInput.focus();
+        }
+    } else if (nameValue.length < 2) {
+        errors.push('Имя должно содержать минимум 2 символа.');
+        if (nameInput) {
+            setFieldError(nameInput, true);
+            nameInput.focus();
+        }
     } else {
         state.recipientName = nameValue;
     }
     
-    if (!phoneValue || !/^\+?\d[\d\s\-()]{9,}$/.test(phoneValue)) {
-        errors.push('Введите корректный номер телефона.');
-        if (phoneInput) setFieldError(phoneInput, true);
+    // Валидация телефона (более гибкая)
+    const phoneRegex = /^(\+7|7|8)?[\s\-]?\(?[0-9]{3}\)?[\s\-]?[0-9]{3}[\s\-]?[0-9]{2}[\s\-]?[0-9]{2}$/;
+    if (!phoneValue) {
+        errors.push('Введите номер телефона.');
+        if (phoneInput) {
+            setFieldError(phoneInput, true);
+            phoneInput.focus();
+        }
+    } else if (!phoneRegex.test(phoneValue.replace(/\s/g, ''))) {
+        errors.push('Введите корректный номер телефона (например: +7 999 123-45-67).');
+        if (phoneInput) {
+            setFieldError(phoneInput, true);
+            phoneInput.focus();
+        }
     } else {
         state.customerPhone = phoneValue;
     }
     
+    // Валидация адреса доставки
     if (state.deliveryType === 'delivery') {
-        if (!state.deliveryAddress || !state.deliveryAddress.trim()) {
-            errors.push('Укажите адрес доставки. Нажмите "Детали адреса доставки" для заполнения.');
+        const addressValue = deliveryAddressInput ? deliveryAddressInput.value.trim() : state.deliveryAddress;
+        if (!addressValue || addressValue === PICKUP_ADDRESS) {
+            errors.push('Укажите адрес доставки.');
+            if (deliveryAddressInput) {
+                setFieldError(deliveryAddressInput, true);
+                deliveryAddressInput.focus();
+            }
+        } else if (addressValue.length < 5) {
+            errors.push('Адрес должен содержать минимум 5 символов.');
+            if (deliveryAddressInput) {
+                setFieldError(deliveryAddressInput, true);
+                deliveryAddressInput.focus();
+            }
+        } else {
+            state.deliveryAddress = addressValue;
         }
     } else {
         state.deliveryAddress = PICKUP_ADDRESS;
     }
     
     if (errors.length) {
-        errors.forEach(err => showNotification(err, 'error'));
+        // Показываем только первую ошибку, чтобы не перегружать пользователя
+        showNotification(errors[0], 'error');
         return false;
     }
     
