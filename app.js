@@ -38,7 +38,8 @@ if (window.Telegram && window.Telegram.WebApp) {
 }
 
 // Состояние приложения
-const defaultCategoryId = menuData?.categories?.[0]?.id || null;
+// Проверяем, что menuData загружен перед использованием
+const defaultCategoryId = (typeof menuData !== 'undefined' && menuData?.categories?.[0]?.id) || null;
 const PICKUP_ADDRESS = 'г. Шахты, ул. Советская, дом 235 «Бункер»';
 const FREE_DELIVERY_THRESHOLD = 1600;
 const DELIVERY_COST = 150;

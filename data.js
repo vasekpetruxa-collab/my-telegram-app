@@ -16,7 +16,7 @@ const menuData = {
             id: "rebra",
             name: " Ребра",
             description: "свиные ребра с гарниром",
-            image: "images/assets/images/pizza/margarita.jpeg",
+            image: "images/assets/images/rebra/rebra free.jpg",
         },
         {
             id: "krilo",
@@ -101,239 +101,239 @@ const menuData = {
             id: 2,
             category: "pizza", 
             name: "Пепперони",
-            description: "Томатный соус, моцарелла, пепперони",
-            price: 550,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            weight: "500г"
+            description: "Томатный соус, моцарелла, базилик, пепперони",
+            price: 520,
+            image: "images/assets/images/pizza/pepperoni.jpg",
+            weight: "460г"
         },
         {
             id: 3,
             category: "pizza",
             name: "4 Сыра", 
-            description: "Моцарелла, горгонзола, пармезан, рикотта",
-            price: 600,
-            image: "images/assets/images/pizza/margarita.jpeg",
+            description: "Сливочный соус, моцарелла, горгонзола, пармезан, гауда, фета",
+            price: 660,
+            image: "images/assets/images/pizza/4 cheeze.jpg",
             weight: "480г"
         },
         {
             id: 4,
             category: "pizza",
             name: "Римская Мясная",
-            description: "Томатный соус, моцарелла, базилик",
-            price: 450,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            weight: "450г"
+            description: "Томатный соус, моцарелла, базилик, шея свиная, бекон, цыпленок",
+            price: 620,
+            image: "images/assets/images/pizza/dereven myas.jpg",
+            weight: "400г"
         },
         {
             id: 5,
             category: "pizza",
-            name: "СТАС",
-            description: "Томатный соус, моцарелла, базилик",
-            price: 450,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            weight: "450г"
+            name: "Мясная",
+            description: "Томатный соус, моцарелла, базилик, пепперони, шея свиная, бекон, цыпленок",
+            price: 620,
+            image: "images/assets/images/pizza/myasn.jpg",
+            weight: "480г"
         },
         {
             id: 6,
             category: "pizza",
-            name: "СТАС",
-            description: "Томатный соус, моцарелла, базилик",
-            price: 450,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            weight: "450г"
+            name: "Ветчина и грибы",
+            description: "Томатный соус, моцарелла, базилик, ветчина, грибы",
+            price: 520,
+            image: "images/assets/images/pizza/vetch i grib.jpg",
+            weight: "480г"
         },
         // ПАСТА
         {
             id: 67,
             category: "pasta",
-            name: "Карбонара",
-            description: "Спагетти, бекон, сыр, яйцо",
-            price: 420,
-            image: "images/assets/images/pizza/margarita.jpeg", 
-            weight: "350г"
+            name: "Паста Карбонара",
+            description: "Паста, бекон, пармезан, яйцо, провансальские травы",
+            price: 380,
+            image: "images/assets/images/pasta/karbonara.jpg", 
+            weight: "200г"
         },
         {
             id: 68,
             category: "pasta",
-            name: "Карбонара",
-            description: "Спагетти, бекон, сыр, яйцо",
-            price: 420,
-            image: "images/assets/images/pizza/margarita.jpeg", 
-            weight: "350г"
+            name: "Паста Нэро",
+            description: "мидии, кальмары, креветка тигровая, спагетти, сливки, пармезан",
+            price: 680,
+            image: "images/assets/images/pasta/nero.jpg", 
+            weight: "280г"
         },
         // РЕБРА
         {
             id: 7,
             category: "rebra",
-            name: "Карбонара",
-            description: "Спагетти, бекон, сыр, яйцо",
-            price: 420,
-            image: "images/assets/images/pizza/margarita.jpeg", 
-            weight: "350г"
+            name: "Ребра BBQ с луком фри",
+            description: "свиные ребра с гарниром: лук фри, бекон, капуста тушеная, соус BBQ",
+            price: 580,
+            image: "images/assets/images/rebra/rebra free.jpg", 
+            weight: "330г"
         },
         {
             id: 8,
             category: "rebra",
-            name: "Карбонара",
-            description: "Спагетти, бекон, сыр, яйцо",
-            price: 420,
-            image: "images/assets/images/pizza/margarita.jpeg", 
-            weight: "350г"
+            name: "Ребра в соусе тейсти с кедровым орехом",
+            description: "свиные ребра с гарниром: кедровый орех, капуста тушеная, соус тейсти",
+            price: 620,
+            image: "images/assets/images/rebra/rebra teysti.jpg", 
+            weight: "330г"
         },
         {
             id: 9,
             category: "rebra",
-            name: "Карбонара",
-            description: "Спагетти, бекон, сыр, яйцо",
-            price: 420,
-            image: "images/assets/images/pizza/margarita.jpeg", 
-            weight: "350г"
+            name: "Ребра сырные с фисташкой",
+            description: "свиные ребра с гарниром: фисташки, сыр, капуста тушеная, соус сырный",
+            price: 560,
+            image: "images/assets/images/rebra/rebra cheeze.jpg", 
+            weight: "330г"
         },
         //КРЫЛЬЯ
         {
             id: 10,
             category: "krilo",
-            name: "Карбонара",
-            description: "Спагетти, бекон, сыр, яйцо",
-            price: 420,
-            image: "images/assets/images/pizza/margarita.jpeg", 
-            weight: "350г"
+            name: "Крылья BBQ с луком фри",
+            description: "куриные крылья с гарниром: лук фри, коул слоу, соус BBQ",
+            price: 520,
+            image: "images/assets/images/krilo/bbq.jpg", 
+            weight: "400г"
         },
         {
             id: 11,
             category: "krilo",
-            name: "Карбонара",
-            description: "Спагетти, бекон, сыр, яйцо",
-            price: 420,
-            image: "images/assets/images/pizza/margarita.jpeg", 
-            weight: "350г"
+            name: "Крылья Том Ям с зеленью",
+            description: "куриные крылья с гарниром: зелень, коул слоу, соус том ям",
+            price: 480,
+            image: "images/assets/images/krilo/tom yam.jpg", 
+            weight: "400г"
         },
         {
             id: 12,
             category: "krilo",
-            name: "Карбонара",
-            description: "Спагетти, бекон, сыр, яйцо",
-            price: 420,
-            image: "images/assets/images/pizza/margarita.jpeg", 
-            weight: "350г"
+            name: "Крылья по-шанхайски",
+            description: "куриные крылья с гарниром: зелень, коул слоу, соус томатный",
+            price: 480,
+            image: "images/assets/images/krilo/shankh.jpg", 
+            weight: "400г"
         },
         //ЗАКУСКИ
         {
             id: 13,
             category: "zakus",
-            name: "Карбонара",
-            description: "Спагетти, бекон, сыр, яйцо",
-            price: 420,
-            image: "images/assets/images/pizza/margarita.jpeg", 
-            weight: "350г"
+            name: "Ассорти мясных деликатесов",
+            description: "Сальчичон, пастрома куриная, грудинка свиная, суджук, гренки, соусы кетчуп и чесночный",
+            price: 680,
+            image: "images/assets/images/zakuski/as myaso.jpg", 
+            weight: "280г"
         },
         {
             id: 14,
             category: "zakus",
-            name: "Карбонара",
-            description: "Спагетти, бекон, сыр, яйцо",
-            price: 420,
-            image: "images/assets/images/pizza/margarita.jpeg", 
+            name: "Ассорти овощей",
+            description: "огурцы, помидоры, перец болгарский, зелень",
+            price: 540,
+            image: "images/assets/images/zakuski/as vegetable.jpg", 
             weight: "350г"
         },
         {
             id: 15,
             category: "zakus",
-            name: "Карбонара",
-            description: "Спагетти, бекон, сыр, яйцо",
-            price: 420,
-            image: "images/assets/images/pizza/margarita.jpeg", 
-            weight: "350г"
+            name: "Ассорти сала",
+            description: "два вида сала, горчица, хрен, гренки",
+            price: 460,
+            image: "images/assets/images/zakuski/as salo.jpg", 
+            weight: "260г"
         },
         {
             id: 16,
             category: "zakus",
-            name: "Карбонара",
-            description: "Спагетти, бекон, сыр, яйцо",
-            price: 420,
-            image: "images/assets/images/pizza/margarita.jpeg", 
+            name: "Ассорти солений",
+            description: "Бочковые разносолы: перец, огурец, капуста, томат, опята, кукуруза",
+            price: 620,
+            image: "images/assets/images/zakuski/as bochkov.jpg", 
             weight: "350г"
         },
         {
             id: 17,
             category: "zakus",
-            name: "Карбонара",
-            description: "Спагетти, бекон, сыр, яйцо",
-            price: 420,
-            image: "images/assets/images/pizza/margarita.jpeg", 
-            weight: "350г"
+            name: "Ассорти сыров",
+            description: "Пармезан, гауда, фета в кунжуте, горгонзола, конфитюр луковый и брусничный",
+            price: 640,
+            image: "images/assets/images/zakuski/as cheeze.jpg", 
+            weight: "240г"
         },
         {
             id: 18,
             category: "zakus",
-            name: "Карбонара",
-            description: "Спагетти, бекон, сыр, яйцо",
-            price: 420,
-            image: "images/assets/images/pizza/margarita.jpeg", 
-            weight: "350г"
+            name: "Ассорти фруктов",
+            description: "Груша, яблоко, киви, банан, виноград, сливочный соус, цитрус",
+            price: 520,
+            image: "images/assets/images/zakuski/as fruit.jpg", 
+            weight: "410г"
         },
         {
             id: 19,
             category: "zakus",
-            name: "Карбонара",
-            description: "Спагетти, бекон, сыр, яйцо",
-            price: 420,
-            image: "images/assets/images/pizza/margarita.jpeg", 
-            weight: "350г"
+            name: "Лимон",
+            description: "Нарезка лимона с сахаром",
+            price: 100,
+            image: "gift lemon.jpg", 
+            weight: "100г"
         },
         {
             id: 20,
             category: "zakus",
-            name: "Карбонара",
-            description: "Спагетти, бекон, сыр, яйцо",
-            price: 420,
-            image: "images/assets/images/pizza/margarita.jpeg", 
-            weight: "350г"
+            name: "Маслины",
+            description: "Маслины с зеленью",
+            price: 240,
+            image: "images/assets/images/zakuski/maslin.jpg", 
+            weight: "80г"
         },
         {
             id: 21,
             category: "zakus",
-            name: "Карбонара",
-            description: "Спагетти, бекон, сыр, яйцо",
-            price: 420,
-            image: "images/assets/images/pizza/margarita.jpeg", 
-            weight: "350г"
+            name: "Оливки",
+            description: "Оливки с зеленью",
+            price: 230,
+            image: "images/assets/images/zakuski/olivki.jpg", 
+            weight: "80г"
         },
         {
             id: 22,
             category: "zakus",
-            name: "Карбонара",
-            description: "Спагетти, бекон, сыр, яйцо",
-            price: 420,
-            image: "images/assets/images/pizza/margarita.jpeg", 
-            weight: "350г"
+            name: "Паштет куриный с конфитюром",
+            description: "Паштет от шефа с конфитюром и багетом",
+            price: 460,
+            image: "images/assets/images/zakuski/pashtet.jpg", 
+            weight: "210г"
         },
         {
             id: 23,
             category: "zakus",
-            name: "Карбонара",
-            description: "Спагетти, бекон, сыр, яйцо",
-            price: 420,
-            image: "images/assets/images/pizza/margarita.jpeg", 
-            weight: "350г"
+            name: "Сельдь атлантическая",
+            description: "Сельдь с маринованным луком и гренками",
+            price: 360,
+            image: "images/assets/images/zakuski/seld.jpg", 
+            weight: "200г"
         },
         {
             id: 24,
             category: "zakus",
-            name: "Карбонара",
-            description: "Спагетти, бекон, сыр, яйцо",
-            price: 420,
-            image: "images/assets/images/pizza/margarita.jpeg", 
-            weight: "350г"
+            name: "Суджук",
+            description: "Колбаска к пенному",
+            price: 280,
+            image: "images/assets/images/zakuski/sudzh.jpg", 
+            weight: "50г"
         },
         {
             id: 25,
             category: "zakus",
-            name: "Карбонара",
-            description: "Спагетти, бекон, сыр, яйцо",
-            price: 420,
-            image: "images/assets/images/pizza/margarita.jpeg", 
-            weight: "350г"
+            name: "Фисташки",
+            description: "Фисташки к пенному",
+            price: 380,
+            image: "images/assets/images/zakuski/fist.jpg", 
+            weight: "80г"
         },
         // Закуски горячие
         {
