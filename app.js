@@ -189,8 +189,12 @@ function renderCategories() {
         }, { capture: false });
         
         // Обработчик для touch событий (мобильные устройства)
-        button.addEventListener('touchend', function(e) {
-            e.preventDefault();
+        // Используем touchstart вместо touchend для более надежной работы
+        button.addEventListener('touchstart', function(e) {
+            // Проверяем, можно ли отменить событие
+            if (e.cancelable) {
+                e.preventDefault();
+            }
             e.stopPropagation();
             console.log('Touch по категории:', category.id, category.name);
             

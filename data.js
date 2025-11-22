@@ -144,7 +144,7 @@ const menuData = {
         },
         // ПАСТА
         {
-            id: 67,
+            id: 73,
             category: "pasta",
             name: "Паста Карбонара",
             description: "Паста, бекон, пармезан, яйцо, провансальские травы",
@@ -153,7 +153,7 @@ const menuData = {
             weight: "200г"
         },
         {
-            id: 68,
+            id: 74,
             category: "pasta",
             name: "Паста Нэро",
             description: "мидии, кальмары, креветка тигровая, спагетти, сливки, пармезан",
@@ -278,7 +278,7 @@ const menuData = {
             name: "Лимон",
             description: "Нарезка лимона с сахаром",
             price: 100,
-            image: "gift lemon.jpg", 
+            image: "images/assets/images/zakuski/", 
             weight: "100г"
         },
         {
@@ -339,379 +339,434 @@ const menuData = {
         {
             id: 26,
             category: "zakus k pen",
-            name: "Цезарь",
-            description: "Курица, салат, сухарики, соус цезарь",
-            price: 320,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            weight: "280г"
+            name: "Poutine, он же Путин",
+            description: "Картофель фри, грудинка, моцарела, кетчуп, специи",
+            price: 660,
+            image: "images/assets/images/zakuski k pen/poutine.jpg",
+            weight: "310г"
         },
         {
             id: 27,
             category: "zakus k pen",
-            name: "Цезарь",
-            description: "Курица, салат, сухарики, соус цезарь",
-            price: 320,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            weight: "280г"
+            name: "Гренки Чеснокова",
+            description: "Бородинский хлеб, чесночное масло, специи, зелень, соус чесночный",
+            price: 240,
+            image: "images/assets/images/zakuski k pen/grenki ches.jpg",
+            weight: "180г"
         },
         {
             id: 28,
             category: "zakus k pen",
-            name: "Цезарь",
-            description: "Курица, салат, сухарики, соус цезарь",
-            price: 320,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            weight: "280г"
+            name: "Гренки духовые с сыром",
+            description: "Бородинский хлеб, моцарелла, специи, зелень",
+            price: 260,
+            image: "images/assets/images/zakuski k pen/grenki mazarela.jpg",
+            weight: "180г"
         },
         {
             id: 29,
             category: "zakus k pen",
-            name: "Цезарь",
-            description: "Курица, салат, сухарики, соус цезарь",
-            price: 320,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            weight: "280г"
+            name: "Кальмар Командор",
+            description: "Филе кальмара, хрустящая панировка, соус спайси",
+            price: 530,
+            image: "images/assets/images/zakuski k pen/kalmar.jpg",
+            weight: "190г"
         },
         {
             id: 30,
             category: "zakus k pen",
-            name: "Цезарь",
-            description: "Курица, салат, сухарики, соус цезарь",
-            price: 320,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            weight: "280г"
+            name: "Картофель фри",
+            description: "Картофель, специи, кетчуп",
+            price: 220,
+            image: "images/assets/images/zakuski k pen/free.jpg",
+            weight: "190г"
         },
         {
             id: 31,
             category: "zakus k pen",
-            name: "Цезарь",
-            description: "Курица, салат, сухарики, соус цезарь",
-            price: 320,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            weight: "280г"
+            name: "Креветки пивные вареные",
+            description: "Креветки северные приготовленные в фирменом маринаде",
+            price: 1080,
+            image: "images/assets/images/zakuski k pen/krev piv.jpg",
+            weight: "250г"
         },
         {
             id: 32,
             category: "zakus k pen",
-            name: "Цезарь",
-            description: "Курица, салат, сухарики, соус цезарь",
-            price: 320,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            weight: "280г"
+            name: "Креветки пивные жареные",
+            description: "Креветки северные обжаренные в специях",
+            price: 1050,
+            image: "images/assets/images/zakuski k pen/krev piv zhar.jpg",
+            weight: "250г"
         },
         {
             id: 33,
             category: "zakus k pen",
-            name: "Цезарь",
-            description: "Курица, салат, сухарики, соус цезарь",
-            price: 320,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            weight: "280г"
+            name: "Крокеты сырные",
+            description: "Моцарела, гауда, пармезан с картофелем в фирменной панировке",
+            price: 360,
+            image: "images/assets/images/zakuski k pen/cheeze crock.jpg",
+            weight: "210г"
         },
         {
             id: 34,
             category: "zakus k pen",
-            name: "Цезарь",
-            description: "Курица, салат, сухарики, соус цезарь",
-            price: 320,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            weight: "280г"
+            name: "Мидии КИВИ",
+            description: "Мидии зеленые в полустворках с сырным/острым соусом",
+            price: 840,
+            image: "images/assets/images/zakuski k pen/midii kivi.jpg",
+            weight: "180г"
         },
         {
             id: 35,
             category: "zakus k pen",
-            name: "Цезарь",
-            description: "Курица, салат, сухарики, соус цезарь",
-            price: 320,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            weight: "280г"
+            name: "Стрипсы куриные",
+            description: "Куриное филе, панировка, соус терияки, специи",
+            price: 280,
+            image: "images/assets/images/zakuski k pen/chiken strips.jpg",
+            weight: "230г"
         },
         // СУП
         {
             id: 36,
             category: "sup",
-            name: "Цезарь",
-            description: "Курица, салат, сухарики, соус цезарь",
-            price: 320,
-            image: "images/assets/images/pizza/margarita.jpeg",
+            name: "Крем-суп грибной",
+            description: "Грибы, морковь, лук, картофель, специи, молочная пенка, сухарики",
+            price: 380,
+            image: "images/assets/images/sup/sup kapuch.jpg",
             weight: "280г"
         },
         {
             id: 37,
             category: "sup",
-            name: "Цезарь",
-            description: "Курица, салат, сухарики, соус цезарь",
-            price: 320,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            weight: "280г"
+            name: "Крем-суп из зеленого горошка",
+            description: "Зеленый горошек, тигровые креветки, зеленое масло, пармезан",
+            price: 590,
+            image: "images/assets/images/sup/goroh krev.jpg",
+            weight: "300г"
         },
         {
             id: 38,
             category: "sup",
-            name: "Цезарь",
-            description: "Курица, салат, сухарики, соус цезарь",
-            price: 320,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            weight: "280г"
+            name: "Лапша по-домашнему",
+            description: "Куриный бульон, лапша, лук, морковь, яйцо пашот, специи, сухарики",
+            price: 420,
+            image: "images/assets/images/sup/lapsha.jpg",
+            weight: "320г"
         },
         {
             id: 39,
             category: "sup",
-            name: "Цезарь",
-            description: "Курица, салат, сухарики, соус цезарь",
-            price: 320,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            weight: "280г"
+            name: "Солянка с копченостями",
+            description: "Бульон свино-говяжий, ассорти колбас, лук, морковь, маслины, лимон, сметана, зелень",
+            price: 540,
+            image: "images/assets/images/sup/solyanka.jpg",
+            weight: "350г"
         },
         {
             id: 40,
             category: "sup",
-            name: "Цезарь",
-            description: "Курица, салат, сухарики, соус цезарь",
-            price: 320,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            weight: "280г"
+            name: "Тайский супчик",
+            description: "Бульон на кокосовом молоке, паста том ям, мидии, кальмар, креветки, томаты, рис, кунжут",
+            price: 620,
+            image: "images/assets/images/sup/tayskiy.jpg",
+            weight: "320г"
         },
         // БУРГЕРЫ
         {
             id: 41,
             category: "burgers",
-            name: "Цезарь",
-            description: "Курица, салат, сухарики, соус цезарь",
-            price: 320,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            weight: "280г"
+            name: "Дабл-килл",
+            description: "Булочка, две говяжьи котлеты, лук, огурец, помидор, сыр чеддер, бекон, соус сырный, салат коул слоу",
+            price: 950,
+            image: "images/assets/images/burgers/dable kill.jpg",
+            weight: "500г"
         },
         {
             id: 42,
             category: "burgers",
-            name: "Цезарь",
-            description: "Курица, салат, сухарики, соус цезарь",
-            price: 320,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            weight: "280г"
+            name: "Классический американский",
+            description: "Булочка, говяжья котлета, сыр гауда, соленый огурец, помидор, соус BBQ, коул слоу",
+            price: 640,
+            image: "images/assets/images/burgers/class americ.jpg",
+            weight: "360г"
         },
         {
             id: 43,
             category: "burgers",
-            name: "Цезарь",
-            description: "Курица, салат, сухарики, соус цезарь",
-            price: 320,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            weight: "280г"
+            name: "Сырное безумие",
+            description: "Булочка, говяжья котлета, моцарелла, салат, огурец соленый, помидор, соус бургер, коул слоу",
+            price: 720,
+            image: "images/assets/images/burgers/cheeze meat.jpg",
+            weight: "460г"
         },
         {
             id: 44,
             category: "burgers",
-            name: "Цезарь",
-            description: "Курица, салат, сухарики, соус цезарь",
-            price: 320,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            weight: "280г"
+            name: "Чикен бекон",
+            description: "Булочка, куриная котлета, бекон, салат, чеддер, помидор, лук, салат, коул слоу",
+            price: 620,
+            image: "images/assets/images/burgers/chiken becon.jpg",
+            weight: "380г"
         }, 
         // ГОРЯЧИЕ БЛЮДА
         {
             id: 45,
             category: "hot eat",
-            name: "Цезарь",
-            description: "Курица, салат, сухарики, соус цезарь",
-            price: 320,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            weight: "280г"
+            name: "Бефстроганов с пюре",
+            description: "Вырезка говяжья, картофельное пюре, соус Строганов, соленый огурчик",
+            price: 580,
+            image: "images/assets/images/hot eat/stroganov.jpg",
+            weight: "320г"
         },
         {
             id: 46,
             category: "hot eat",
-            name: "Цезарь",
-            description: "Курица, салат, сухарики, соус цезарь",
-            price: 320,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            weight: "280г"
+            name: "Жареха с копченостями",
+            description: "Картофель, грудика, лук, кабачок, перец болгарски, шампиньоны, специи, зелень",
+            price: 640,
+            image: "images/assets/images/hot eat/zhar kopch.jpg",
+            weight: "380г"
         },
+        
         {
             id: 47,
             category: "hot eat",
-            name: "Цезарь",
-            description: "Курица, салат, сухарики, соус цезарь",
-            price: 320,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            weight: "280г"
+            name: "Жареха с курицей",
+            description: "Картофель, куриное филе, лук, кабачок, перец болгарски, шампиньоны, специи, зелень",
+            price: 590,
+            image: "images/assets/images/hot eat/zhar kur.jpg",
+            weight: "360г"
         },
-        // ДЕСЕРТЫ
         {
             id: 48,
-            category: "deserts",
-            name: "Цезарь",
-            description: "Курица, салат, сухарики, соус цезарь",
-            price: 320,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            weight: "280г"
+            category: "hot eat",
+            name: "Куриные шашлычки с овощами гриль",
+            description: "Куриное филе, кабачок, перец болгарский, лук, томаты, соус терияки,",
+            price: 550,
+            image: "images/assets/images/hot eat/shashli.jpg",
+            weight: "360г"
         },
         {
             id: 49,
-            category: "deserts",
-            name: "Цезарь",
-            description: "Курица, салат, сухарики, соус цезарь",
-            price: 320,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            weight: "280г"
+            category: "hot eat",
+            name: "Свинина, томленная в пиве с пшеничной кашей",
+            description: "Каша пшеничная в сливочном соусе с пармезаном, свинина томленая в пиве, соус терияки, томаты, зелень",
+            price: 620,
+            image: "images/assets/images/hot eat/svin toml.jpg",
+            weight: "320г"
         },
-        {
-            id: 52,
-            category: "deserts",
-            name: "Цезарь",
-            description: "Курица, салат, сухарики, соус цезарь",
-            price: 320,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            weight: "280г"
-        },
-        //СЕТЫ
         {
             id: 50,
-            category: "sets",
-            name: "Цезарь",
-            description: "Курица, салат, сухарики, соус цезарь",
-            price: 320,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            weight: "280г"
+            category: "hot eat",
+            name: "Стейк из лосося с фирменным рисом",
+            description: "Филе лосося, рис, перец болгарский, морковь, кабачок, сливочный соус, кунжут",
+            price: 890,
+            image: "images/assets/images/hot eat/steyk fish.jpg",
+            weight: "270г"
         },
         {
             id: 51,
-            category: "sets",
-            name: "Цезарь",
-            description: "Курица, салат, сухарики, соус цезарь",
+            category: "hot eat",
+            name: "Стейк из свиной шеи с овощами гриль",
+            description: "Шея свиная, соус барбекю, соус чесночный, перец болгарский, кабачок, шампиньоны, специи, зелень",
+            price: 680,
+            image: "images/assets/images/hot eat/steyk pig.jpg",
+            weight: "360г"
+        },
+        // ДЕСЕРТЫ
+        {
+            id: 52,
+            category: "deserts",
+            name: "Жареный шоколад",
+            description: "Шоколадный бисквит, соус крем чиз, карамель, вафельная крошка",
             price: 320,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            weight: "280г"
+            image: "images/assets/images/deserts/choco.jpg",
+            weight: "140г"
         },
         {
             id: 53,
-            category: "sets",
-            name: "Цезарь",
-            description: "Курица, салат, сухарики, соус цезарь",
-            price: 320,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            weight: "280г"
+            category: "deserts",
+            name: "Ореховая Анна Павлова",
+            description: "Безе с грецким орехом, сливочный соус, банан, яблоко, груша, киви",
+            price: 360,
+            image: "images/assets/images/deserts/anna pavlova.jpg",
+            weight: "200г"
         },
         {
             id: 54,
-            category: "sets",
-            name: "Цезарь",
-            description: "Курица, салат, сухарики, соус цезарь",
-            price: 320,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            weight: "280г"
+            category: "deserts",
+            name: "Чизкейк Лимонный",
+            description: "Песочный корж с цитрусовым крем чиз",
+            price: 340,
+            image: "images/assets/images/deserts/limon cheeze.jpg",
+            weight: "170г"
         },
-            // САЛАТЫ
+        //СЕТЫ
         {
             id: 55,
-            category: "salads",
-            name: "Цезарь",
-            description: "Курица, салат, сухарики, соус цезарь",
-            price: 320,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            weight: "280г"
+            category: "sets",
+            name: "В своей тарелке",
+            description: "Мидии, кальмар, креветки, сырные наггетсы, соусы спайси, сырный, терияки, оливки, маслины",
+            price: 1440,
+            image: "images/assets/images/sets/v svoey tar.jpg",
+            weight: "640г"
         },
         {
             id: 56,
-            category: "salads",
-            name: "Цезарь",
-            description: "Курица, салат, сухарики, соус цезарь",
-            price: 320,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            weight: "280г"
+            category: "sets",
+            name: "Время экзекуции",
+            description: "Колбаски гриль, шея свиная, крылья, ребра, соус барбекю, сальса, кетчуп",
+            price: 1650,
+            image: "images/assets/images/sets/vremya ekzik.jpg",
+            weight: "690г"
         },
         {
             id: 57,
-            category: "salads",
-            name: "Цезарь",
-            description: "Курица, салат, сухарики, соус цезарь",
-            price: 320,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            weight: "280г"
+            category: "sets",
+            name: "Трали-Вали",
+            description: "Сырные крокеты, суджук, фисташки, мидии, гренки, пастрома куриная, сырный соус, медово-горчичный соус",
+            price: 1290,
+            image: "images/assets/images/sets/trali vali.jpg",
+            weight: "560г"
         },
         {
             id: 58,
-            category: "salads",
-            name: "Цезарь",
-            description: "Курица, салат, сухарики, соус цезарь",
-            price: 320,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            weight: "280г"
+            category: "sets",
+            name: "Эни-Бени",
+            description: "Гренки, сырные крокеты, куриные стрипсы, картофель фри, суджук, кетчуп, соус чесночный",
+            price: 740,
+            image: "images/assets/images/sets/eni beni.jpg",
+            weight: "460г"
         },
+            // САЛАТЫ
         {
             id: 59,
             category: "salads",
-            name: "Цезарь",
-            description: "Курица, салат, сухарики, соус цезарь",
-            price: 320,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            weight: "280г"
+            name: "Греческий",
+            description: "Лист салата, перец болгарский, томаты, огурец, лук, фета, маслины, масло оливковое",
+            price: 460,
+            image: "images/assets/images/satads/grech.jpg",
+            weight: "320г"
         },
         {
             id: 60,
             category: "salads",
-            name: "Цезарь",
-            description: "Курица, салат, сухарики, соус цезарь",
-            price: 320,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            weight: "280г"
+            name: "Салат с кальмаром гриль и печеный перец",
+            description: "Лист салата, перец болгарский, кальмар, багет, соус устричный, томатный сальса, пармезан",
+            price: 690,
+            image: "images/assets/images/satads/kalmar.jpg",
+            weight: "220г"
+        },
+        {
+            id: 61,
+            category: "salads",
+            name: "Салат с куриной печенью",
+            description: "Лист салата, печень куриная, яблоко, мед, соевый соус, крем-бальзамик, соус песто, пармезан",
+            price: 520,
+            image: "images/assets/images/satads/chicken apple.jpg",
+            weight: "220г"
+        },
+        {
+            id: 62,
+            category: "salads",
+            name: "Салат с морепродуктами",
+            description: "Лист салата, мидии, кальмар, креветки, томаты, перец болгарский, соус унаги, кукуруза",
+            price: 780,
+            image: "images/assets/images/satads/sea.jpg",
+            weight: "240г"
+        },
+        {
+            id: 63,
+            category: "salads",
+            name: "Салат с телячьей вырезкой",
+            description: "Лист салата, вырезка говяжья, соус унаги, перец болгарский, кабачок, огурец, картофель, шампиньоны, кунжут, пармезан",
+            price: 560,
+            image: "images/assets/images/satads/beef.jpg",
+            weight: "220г"
+        },
+        {
+            id: 64,
+            category: "salads",
+            name: "Цезарь с креветкой",
+            description: "Лист салата, креветки тигровые, соус цезарь, томаты, пармезан, сухарики",
+            price: 520,
+            image: "images/assets/images/satads/cez krev.jpg",
+            weight: "180г"
+        },
+        {
+            id: 65,
+            category: "salads",
+            name: "Цезарь с курицей",
+            description: "Лист салата, филе куриное, соус цезарь, томаты, пармезан, сухарики",
+            price: 420,
+            image: "images/assets/images/satads/cez chick.jpg",
+            weight: "180г"
+        },
+        {
+            id: 66,
+            category: "salads",
+            name: "Цезарь с лососем",
+            description: "Лист салата, лосось слабосоленый, соус цезарь, томаты, пармезан, сухарики",
+            price: 520,
+            image: "images/assets/images/satads/cez fish.jpg",
+            weight: "170г"
         },
         
         // НАПИТКИ
         {
-            id: 61, 
+            id: 67, 
             category: "drinks",
-            name: "Кола",
-            description: "Coca-Cola 0.5л",
-            price: 120,
-            image: "images/assets/images/pizza/margarita.jpeg",
+            name: "Добрый cola",
+            description:"",
+            price: 200,
+            image: "images/assets/images/pizza/",
+            volume: "300мл"
+        },
+        {
+            id: 68, 
+            category: "drinks",
+            name: "Добрый lemonLime",
+            description: "",
+            price: 200,
+            image: "images/assets/images/pizza/",
+            volume: "330мл"
+        },
+        {
+            id: 69, 
+            category: "drinks",
+            name: "Tonik",
+            description: "",
+            price: 200,
+            image: "images/assets/images/pizza/",
+            volume: "330мл"
+        },
+        {
+            id: 70, 
+            category: "drinks",
+            name: "Вода газ стекло",
+            description: "",
+            price: 170,
+            image: "images/assets/images/pizza/",
             volume: "500мл"
         },
         {
-            id: 62, 
+            id: 71, 
             category: "drinks",
-            name: "Кола",
-            description: "Coca-Cola 0.5л",
-            price: 120,
-            image: "images/assets/images/pizza/margarita.jpeg",
+            name: "Вода не газ. стекло",
+            description: "",
+            price: 160,
+            image: "images/assets/images/pizza/",
             volume: "500мл"
         },
         {
-            id: 63, 
+            id: 72, 
             category: "drinks",
-            name: "Кола",
-            description: "Coca-Cola 0.5л",
-            price: 120,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            volume: "500мл"
-        },
-        {
-            id: 64, 
-            category: "drinks",
-            name: "Кола",
-            description: "Coca-Cola 0.5л",
-            price: 120,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            volume: "500мл"
-        },
-        {
-            id: 65, 
-            category: "drinks",
-            name: "Кола",
-            description: "Coca-Cola 0.5л",
-            price: 120,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            volume: "500мл"
-        },
-        {
-            id: 66, 
-            category: "drinks",
-            name: "Кола",
-            description: "Coca-Cola 0.5л",
-            price: 120,
-            image: "images/assets/images/pizza/margarita.jpeg",
-            volume: "500мл"
+            name: "Сок в ассортименте",
+            description: "",
+            price: 420,
+            image: "images/assets/images/pizza/",
+            volume: "920-1000мл"
         },
     ]
 };
