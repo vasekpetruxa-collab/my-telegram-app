@@ -189,22 +189,40 @@ function renderCategories() {
         }, { capture: false });
         
         // Обработчик для touch событий (мобильные устройства)
-        // Используем touchstart вместо touchend для более надежной работы
+        // Используем touchend для различения клика и свайпа
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchStartTime = 0;
+        
         button.addEventListener('touchstart', function(e) {
-            // Проверяем, можно ли отменить событие
-            if (e.cancelable) {
-                e.preventDefault();
-            }
-            e.stopPropagation();
-            console.log('Touch по категории:', category.id, category.name);
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            touchStartTime = Date.now();
+        }, { passive: true });
+        
+        button.addEventListener('touchend', function(e) {
+            const touchEndX = e.changedTouches[0].clientX;
+            const touchEndY = e.changedTouches[0].clientY;
+            const touchEndTime = Date.now();
+            const deltaX = Math.abs(touchEndX - touchStartX);
+            const deltaY = Math.abs(touchEndY - touchStartY);
+            const deltaTime = touchEndTime - touchStartTime;
             
-            const categoryId = category.id;
-            if (categoryId) {
-                state.currentCategory = categoryId;
-                renderCategories();
-                renderMenuItems();
+            // Если движение было небольшое и быстрое - это клик
+            // Если движение было большое - это свайп, не обрабатываем
+            if (deltaX < 10 && deltaY < 10 && deltaTime < 300) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Touch по категории:', category.id, category.name);
+                
+                const categoryId = category.id;
+                if (categoryId) {
+                    state.currentCategory = categoryId;
+                    renderCategories();
+                    renderMenuItems();
+                }
             }
-        }, { passive: false, capture: false });
+        }, { passive: false });
         
         categoriesContainer.appendChild(button);
     });
@@ -1024,6 +1042,9 @@ function setupEventListeners() {
     // Обработчики категорий устанавливаются в renderCategories()
     // Здесь только общие обработчики
     
+    // Добавляем обработку свайпов для категорий
+    setupCategoriesSwipe();
+    
     // Поиск по меню
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
@@ -1173,6 +1194,64 @@ function setupEventListeners() {
             }
         }
     });
+}
+
+// Функция для обработки свайпов в категориях
+function setupCategoriesSwipe() {
+    const categoriesContainer = document.getElementById('categories');
+    if (!categoriesContainer) return;
+    
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchStartTime = 0;
+    let isScrolling = false;
+    let scrollStartX = 0;
+    
+    categoriesContainer.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        touchStartTime = Date.now();
+        scrollStartX = categoriesContainer.scrollLeft;
+        isScrolling = false;
+    }, { passive: true });
+    
+    categoriesContainer.addEventListener('touchmove', (e) => {
+        const touchCurrentX = e.touches[0].clientX;
+        const touchCurrentY = e.touches[0].clientY;
+        const deltaX = touchCurrentX - touchStartX;
+        const deltaY = touchCurrentY - touchStartY;
+        
+        // Если движение по горизонтали больше, чем по вертикали - это свайп
+        if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
+            isScrolling = true;
+            // Прокручиваем контейнер
+            categoriesContainer.scrollLeft = scrollStartX - deltaX;
+        }
+    }, { passive: true });
+    
+    categoriesContainer.addEventListener('touchend', (e) => {
+        const touchEndX = e.changedTouches[0].clientX;
+        const touchEndY = e.changedTouches[0].clientY;
+        const touchEndTime = Date.now();
+        const deltaX = touchEndX - touchStartX;
+        const deltaY = touchEndY - touchStartY;
+        const deltaTime = touchEndTime - touchStartTime;
+        
+        // Если был свайп, добавляем инерцию
+        if (isScrolling && Math.abs(deltaX) > 10) {
+            const velocity = deltaX / deltaTime;
+            const distance = deltaX * 1.5; // Увеличиваем расстояние для плавности
+            
+            // Плавная прокрутка с инерцией
+            const targetScroll = categoriesContainer.scrollLeft - distance;
+            categoriesContainer.scrollTo({
+                left: targetScroll,
+                behavior: 'smooth'
+            });
+        }
+        
+        isScrolling = false;
+    }, { passive: true });
 }
 
 function openAddressDetailsModal() {

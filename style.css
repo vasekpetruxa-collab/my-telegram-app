@@ -140,6 +140,7 @@ body {
     gap: 10px;
     padding: 10px 15px 20px;
     overflow-x: auto;
+    overflow-y: hidden;
     background: transparent;
     position: relative;
     z-index: 10;
@@ -148,6 +149,9 @@ body {
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
 }
 
 .categories::-webkit-scrollbar {
@@ -186,12 +190,14 @@ body {
     -ms-user-select: none !important;
     user-select: none !important;
     -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
+    touch-action: pan-y;
     display: inline-block;
     min-width: fit-content;
+    flex-shrink: 0;
     -webkit-touch-callout: none;
     -webkit-user-drag: none;
     -khtml-user-select: none;
+    scroll-snap-align: start;
 }
 
 .category-btn:hover {
@@ -481,7 +487,7 @@ body {
     z-index: 100;
     transition: all 0.2s;
     pointer-events: auto !important;
-    touch-action: manipulation;
+    touch-action: pan-y;
     display: flex;
     align-items: center;
     justify-content: center;
