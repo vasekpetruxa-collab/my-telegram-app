@@ -1,0 +1,268 @@
+// Telegram Bot для обработки заказов из Web App
+const { Telegraf } = require('telegraf');
+require('dotenv').config();
+
+// Инициализация бота
+const bot = new Telegraf(process.env.BOT_TOKEN);
+
+// Хранилище заказов (в реальном проекте используйте базу данных)
+const orders = [];
+
+// ============================================
+// ОСНОВНЫЕ КОМАНДЫ БОТА
+// ============================================
+
+// Команда /start - приветствие и запуск Web App
+bot.start(async (ctx) => {
+    const welcomeMessage = `
+🍕 Добро пожаловать в гастропаб БУНКЕР!
+
+Я помогу вам сделать заказ. Нажмите на кнопку ниже, чтобы открыть меню:
+    `;
+    
+    await ctx.reply(welcomeMessage, {
+        reply_markup: {
+            inline_keyboard: [[
+                {
+                    text: '🍕 Открыть меню',
+                    web_app: { url: process.env.WEB_APP_URL || 'https://your-domain.com' }
+                }
+            ]]
+        }
+    });
+});
+
+// Команда /menu - открыть меню
+bot.command('menu', async (ctx) => {
+    await ctx.reply('Открываю меню...', {
+        reply_markup: {
+            inline_keyboard: [[
+                {
+                    text: '🍕 Открыть меню',
+                    web_app: { url: process.env.WEB_APP_URL || 'https://your-domain.com' }
+                }
+            ]]
+        }
+    });
+});
+
+// Команда /help - помощь
+bot.command('help', async (ctx) => {
+    const helpText = `
+📖 Доступные команды:
+
+/start - Начать работу с ботом
+/menu - Открыть меню
+/help - Показать эту справку
+/orders - Посмотреть мои заказы (только для вас)
+/stats - Статистика заказов (только для администратора)
+
+💡 Для оформления заказа используйте кнопку "Открыть меню"
+    `;
+    await ctx.reply(helpText);
+});
+
+// Команда /orders - показать заказы пользователя
+bot.command('orders', async (ctx) => {
+    const userId = ctx.from.id;
+    const userOrders = orders.filter(order => order.user?.id === userId);
+    
+    if (userOrders.length === 0) {
+        await ctx.reply('У вас пока нет заказов. Сделайте первый заказ через меню! 🍕');
+        return;
+    }
+    
+    let message = `📋 Ваши заказы (${userOrders.length}):\n\n`;
+    
+    userOrders.slice(-5).reverse().forEach((order, index) => {
+        const date = new Date(order.timestamp).toLocaleString('ru-RU');
+        message += `${index + 1}. Заказ от ${date}\n`;
+        message += `   Сумма: ${order.total} ₽\n`;
+        message += `   Тип: ${order.deliveryType === 'pickup' ? 'Самовывоз' : 'Доставка'}\n`;
+        message += `   Статус: ${order.status || 'Принят'}\n\n`;
+    });
+    
+    await ctx.reply(message);
+});
+
+// Команда /stats - статистика (только для администратора)
+bot.command('stats', async (ctx) => {
+    const adminIds = (process.env.ADMIN_IDS || '').split(',').map(id => parseInt(id.trim()));
+    
+    if (!adminIds.includes(ctx.from.id)) {
+        await ctx.reply('❌ У вас нет доступа к этой команде.');
+        return;
+    }
+    
+    const totalOrders = orders.length;
+    const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
+    const pickupOrders = orders.filter(o => o.deliveryType === 'pickup').length;
+    const deliveryOrders = orders.filter(o => o.deliveryType === 'delivery').length;
+    
+    const statsMessage = `
+📊 Статистика заказов:
+
+Всего заказов: ${totalOrders}
+Общая выручка: ${totalRevenue} ₽
+Самовывоз: ${pickupOrders}
+Доставка: ${deliveryOrders}
+    `;
+    
+    await ctx.reply(statsMessage);
+});
+
+// ============================================
+// ОБРАБОТКА ДАННЫХ ИЗ WEB APP
+// ============================================
+
+// Обработка данных, отправленных из Web App
+bot.on('message', async (ctx) => {
+    // Проверяем, есть ли данные от Web App
+    // В Telegraf данные могут приходить в разных форматах
+    const webAppData = ctx.message?.web_app?.data || ctx.message?.web_app_data?.data;
+    
+    if (!webAppData) {
+        // Если это обычное сообщение, игнорируем
+        return;
+    }
+    
+    try {
+        // Парсим данные заказа
+        const orderData = JSON.parse(webAppData);
+        
+        console.log('Получен заказ:', orderData);
+        
+        // Добавляем статус и ID заказа
+        const order = {
+            ...orderData,
+            orderId: `ORD-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+            status: 'new',
+            createdAt: new Date().toISOString()
+        };
+        
+        // Сохраняем заказ
+        orders.push(order);
+        
+        // Формируем сообщение для пользователя
+        const orderMessage = formatOrderMessage(order);
+        
+        // Отправляем подтверждение пользователю
+        await ctx.reply(orderMessage, {
+            parse_mode: 'HTML'
+        });
+        
+        // Уведомляем администраторов
+        await notifyAdmins(ctx, order);
+        
+        // Здесь можно добавить интеграцию с CRM
+        // await saveOrderToCRM(order);
+        
+    } catch (error) {
+        console.error('Ошибка обработки заказа:', error);
+        await ctx.reply('❌ Произошла ошибка при обработке заказа. Пожалуйста, попробуйте еще раз.');
+    }
+});
+
+// ============================================
+// ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+// ============================================
+
+// Форматирование сообщения о заказе
+function formatOrderMessage(order) {
+    const deliveryTypeText = order.deliveryType === 'pickup' ? 'Самовывоз' : 'Доставка';
+    const paymentMethodText = order.paymentMethod === 'cod' ? 'При получении' : 'Онлайн';
+    
+    let message = `
+✅ <b>Заказ принят!</b>
+
+📋 Номер заказа: <code>${order.orderId}</code>
+👤 Получатель: ${order.recipientName}
+📞 Телефон: ${order.phone}
+🚚 Тип доставки: ${deliveryTypeText}
+💳 Способ оплаты: ${paymentMethodText}
+    `;
+    
+    if (order.deliveryType === 'delivery' && order.address) {
+        message += `📍 Адрес: ${order.address}\n`;
+        if (order.addressDetails?.apartment) {
+            message += `   Квартира: ${order.addressDetails.apartment}\n`;
+        }
+        if (order.addressDetails?.comment) {
+            message += `   Комментарий: ${order.addressDetails.comment}\n`;
+        }
+    }
+    
+    message += `\n🛒 <b>Состав заказа:</b>\n`;
+    order.items.forEach(item => {
+        message += `   • ${item.name} × ${item.quantity} = ${item.price * item.quantity} ₽\n`;
+    });
+    
+    if (order.cutlery > 0) {
+        message += `   • Приборы: ${order.cutlery} шт.\n`;
+    }
+    
+    message += `\n💰 <b>Итого: ${order.total} ₽</b>\n`;
+    
+    if (order.deliveryType === 'pickup') {
+        message += `\n📍 Забрать заказ можно по адресу:\nг. Шахты, ул. Советская, дом 235 «Бункер»`;
+    }
+    
+    message += `\n\n⏰ Мы свяжемся с вами в ближайшее время!`;
+    
+    return message;
+}
+
+// Уведомление администраторов о новом заказе
+async function notifyAdmins(ctx, order) {
+    const adminIds = (process.env.ADMIN_IDS || '').split(',').map(id => parseInt(id.trim()));
+    
+    if (adminIds.length === 0) return;
+    
+    const adminMessage = `
+🔔 <b>Новый заказ!</b>
+
+📋 Номер: <code>${order.orderId}</code>
+👤 Клиент: ${order.recipientName}
+📞 Телефон: ${order.phone}
+💰 Сумма: ${order.total} ₽
+🚚 Тип: ${order.deliveryType === 'pickup' ? 'Самовывоз' : 'Доставка'}
+    `;
+    
+    for (const adminId of adminIds) {
+        try {
+            await bot.telegram.sendMessage(adminId, adminMessage, { parse_mode: 'HTML' });
+        } catch (error) {
+            console.error(`Ошибка отправки уведомления администратору ${adminId}:`, error);
+        }
+    }
+}
+
+// ============================================
+// ОБРАБОТКА ОШИБОК
+// ============================================
+
+bot.catch((err, ctx) => {
+    console.error('Ошибка в боте:', err);
+    ctx.reply('Произошла ошибка. Пожалуйста, попробуйте позже.');
+});
+
+// ============================================
+// ЗАПУСК БОТА
+// ============================================
+
+// Запуск бота
+bot.launch().then(() => {
+    console.log('🤖 Бот запущен и готов к работе!');
+    console.log('📱 Web App URL:', process.env.WEB_APP_URL || 'не указан');
+}).catch((error) => {
+    console.error('Ошибка запуска бота:', error);
+    process.exit(1);
+});
+
+// Graceful shutdown
+process.once('SIGINT', () => bot.stop('SIGINT'));
+process.once('SIGTERM', () => bot.stop('SIGTERM'));
+
+// Экспорт для использования в других модулях
+module.exports = { bot, orders };
+

@@ -1,0 +1,20 @@
+# Зависимости
+node_modules/
+
+# Переменные окружения
+.env
+
+# Логи
+*.log
+npm-debug.log*
+
+# Временные файлы
+.DS_Store
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+
