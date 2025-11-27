@@ -117,6 +117,14 @@ bot.command('stats', async (ctx) => {
 
 // Обработка данных, отправленных из Web App
 bot.on('message', async (ctx) => {
+    // Логируем все входящие сообщения для отладки
+    console.log('Получено сообщение:', {
+        hasWebApp: !!ctx.message?.web_app,
+        hasWebAppData: !!ctx.message?.web_app_data,
+        messageType: ctx.message?.text ? 'text' : 'other',
+        fullMessage: JSON.stringify(ctx.message, null, 2)
+    });
+    
     // Проверяем, есть ли данные от Web App
     // В Telegraf данные могут приходить в разных форматах
     const webAppData = ctx.message?.web_app?.data || ctx.message?.web_app_data?.data;
@@ -125,6 +133,8 @@ bot.on('message', async (ctx) => {
         // Если это обычное сообщение, игнорируем
         return;
     }
+    
+    console.log('Найдены данные Web App:', webAppData);
     
     try {
         // Парсим данные заказа
@@ -214,9 +224,17 @@ function formatOrderMessage(order) {
 
 // Уведомление администраторов о новом заказе
 async function notifyAdmins(ctx, order) {
-    const adminIds = (process.env.ADMIN_IDS || '').split(',').map(id => parseInt(id.trim()));
+    const adminIdsStr = process.env.ADMIN_IDS || '';
+    console.log('ADMIN_IDS из .env:', adminIdsStr);
     
-    if (adminIds.length === 0) return;
+    const adminIds = adminIdsStr.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
+    
+    console.log('Список администраторов:', adminIds);
+    
+    if (adminIds.length === 0) {
+        console.warn('⚠️ ADMIN_IDS не настроен или пуст! Уведомления администраторам не будут отправлены.');
+        return;
+    }
     
     const adminMessage = `
 🔔 <b>Новый заказ!</b>
@@ -228,11 +246,18 @@ async function notifyAdmins(ctx, order) {
 🚚 Тип: ${order.deliveryType === 'pickup' ? 'Самовывоз' : 'Доставка'}
     `;
     
+    console.log('Отправка уведомлений администраторам...');
+    
     for (const adminId of adminIds) {
         try {
+            console.log(`Отправка уведомления администратору ${adminId}...`);
             await bot.telegram.sendMessage(adminId, adminMessage, { parse_mode: 'HTML' });
+            console.log(`✅ Уведомление успешно отправлено администратору ${adminId}`);
         } catch (error) {
-            console.error(`Ошибка отправки уведомления администратору ${adminId}:`, error);
+            console.error(`❌ Ошибка отправки уведомления администратору ${adminId}:`, error.message);
+            if (error.response) {
+                console.error('Детали ошибки:', error.response);
+            }
         }
     }
 }
