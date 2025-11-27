@@ -126,8 +126,8 @@ bot.on('message', async (ctx) => {
     });
     
     // Проверяем, есть ли данные от Web App
-    // В Telegraf данные могут приходить в разных форматах
-    const webAppData = ctx.message?.web_app?.data || ctx.message?.web_app_data?.data;
+    // В Telegraf данные приходят в формате web_app_data.data
+    const webAppData = ctx.message?.web_app_data?.data;
     
     if (!webAppData) {
         // Если это обычное сообщение, игнорируем
