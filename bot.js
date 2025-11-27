@@ -135,6 +135,22 @@ bot.command('stats', async (ctx) => {
 
 // Обработка данных, отправленных из Web App
 // Обрабатываем ВСЕ типы обновлений для диагностики
+
+// Обработчик для ВСЕХ обновлений (для диагностики)
+bot.use(async (ctx, next) => {
+    console.log('\n🔔 ПОЛУЧЕНО ОБНОВЛЕНИЕ');
+    console.log('Тип обновления:', ctx.updateType);
+    console.log('Время:', new Date().toISOString());
+    
+    if (ctx.updateType === 'message') {
+        console.log('📨 Это сообщение');
+        console.log('hasWebApp:', !!ctx.message?.web_app);
+        console.log('hasWebAppData:', !!ctx.message?.web_app_data);
+    }
+    
+    return next();
+});
+
 bot.on('message', async (ctx) => {
     // Пропускаем команды - они обрабатываются отдельно
     if (ctx.message?.text && ctx.message.text.startsWith('/')) {
