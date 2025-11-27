@@ -134,13 +134,32 @@ bot.command('stats', async (ctx) => {
 // ============================================
 
 // Обработка данных, отправленных из Web App
+// Обрабатываем ВСЕ типы обновлений для диагностики
 bot.on('message', async (ctx) => {
+    // Пропускаем команды - они обрабатываются отдельно
+    if (ctx.message?.text && ctx.message.text.startsWith('/')) {
+        return; // Команды обрабатываются bot.command()
+    }
+    
     // Логируем все входящие сообщения для отладки
     console.log('\n=== ПОЛУЧЕНО СООБЩЕНИЕ ===');
+    console.log('Время:', new Date().toISOString());
     console.log('Тип сообщения:', ctx.message?.text ? 'text' : 'other');
     console.log('hasWebApp:', !!ctx.message?.web_app);
     console.log('hasWebAppData:', !!ctx.message?.web_app_data);
-    console.log('Полное сообщение:', JSON.stringify(ctx.message, null, 2));
+    console.log('Ключи объекта message:', Object.keys(ctx.message || {}));
+    
+    // Детальный вывод структуры сообщения
+    if (ctx.message?.web_app_data) {
+        console.log('📦 web_app_data найден:', JSON.stringify(ctx.message.web_app_data, null, 2));
+    }
+    if (ctx.message?.web_app) {
+        console.log('📦 web_app найден:', JSON.stringify(ctx.message.web_app, null, 2));
+    }
+    
+    // Полное сообщение (первые 500 символов для читаемости)
+    const fullMessage = JSON.stringify(ctx.message, null, 2);
+    console.log('Полное сообщение (первые 500 символов):', fullMessage.substring(0, 500));
     
     // Проверяем данные от Web App в разных возможных форматах
     let webAppData = null;
