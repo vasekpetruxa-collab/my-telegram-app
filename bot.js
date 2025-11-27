@@ -1,9 +1,27 @@
 // Telegram Bot для обработки заказов из Web App
+console.log('🚀 Начало загрузки бота...');
 const { Telegraf } = require('telegraf');
+console.log('✅ Telegraf загружен');
 require('dotenv').config();
+console.log('✅ .env загружен');
 
 // Инициализация бота
+console.log('🔧 Инициализация бота...');
 const bot = new Telegraf(process.env.BOT_TOKEN);
+console.log('✅ Бот инициализирован');
+
+// Проверка подключения к Telegram API перед запуском
+console.log('🔍 Проверка подключения к Telegram API...');
+bot.telegram.getMe()
+    .then(me => {
+        console.log('✅ Подключение к Telegram API успешно!');
+        console.log('   Имя бота:', me.first_name);
+        console.log('   Username:', me.username);
+    })
+    .catch(err => {
+        console.error('❌ Ошибка подключения к Telegram API:', err.message);
+        console.error('   Проверьте токен бота и интернет-соединение');
+    });
 
 // Хранилище заказов (в реальном проекте используйте базу данных)
 const orders = [];
@@ -298,13 +316,43 @@ bot.catch((err, ctx) => {
 // ============================================
 
 // Запуск бота
-bot.launch().then(() => {
-    console.log('🤖 Бот запущен и готов к работе!');
-    console.log('📱 Web App URL:', process.env.WEB_APP_URL || 'не указан');
-}).catch((error) => {
-    console.error('Ошибка запуска бота:', error);
-    process.exit(1);
-});
+console.log('🚀 Начинаю запуск бота...');
+
+// Пробуем использовать startPolling вместо launch для обхода проблем с long polling
+async function startBot() {
+    try {
+        console.log('⏳ Запуск long polling...');
+        
+        // Используем startPolling с явными параметрами
+        await bot.telegram.deleteWebhook({ drop_pending_updates: true });
+        console.log('✅ Webhook удален (если был установлен)');
+        
+        // Запускаем polling
+        bot.startPolling({
+            allowedUpdates: ['message', 'callback_query'],
+            dropPendingUpdates: false
+        });
+        
+        console.log('🤖 Бот запущен и готов к работе!');
+        console.log('📱 Web App URL:', process.env.WEB_APP_URL || 'не указан');
+        console.log('✅ Бот работает и ожидает сообщения...');
+        console.log('💡 Бот использует long polling для получения обновлений');
+        
+    } catch (error) {
+        console.error('❌ Ошибка запуска бота:', error);
+        console.error('Детали ошибки:', error.message);
+        if (error.response) {
+            console.error('Ответ API:', JSON.stringify(error.response, null, 2));
+        }
+        if (error.stack) {
+            console.error('Stack trace:', error.stack);
+        }
+        process.exit(1);
+    }
+}
+
+// Запускаем бота
+startBot();
 
 // Graceful shutdown
 process.once('SIGINT', () => bot.stop('SIGINT'));
