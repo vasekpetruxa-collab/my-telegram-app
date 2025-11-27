@@ -25,47 +25,110 @@ bot.telegram.getMe()
 
 // Хранилище заказов (в реальном проекте используйте базу данных)
 const orders = [];
+// Хранилище message_id для обновления сообщений
+// Структура: orderId -> { customerMessageId, customerChatId, adminMessages: [{ messageId, adminId }] }
+const orderMessages = new Map();
+
+// ============================================
+// КЛАВИАТУРА БОТА
+// ============================================
+
+// Создание постоянной клавиатуры (Reply Keyboard)
+function getMainKeyboard() {
+    return {
+        keyboard: [
+            [
+                { text: '🍕 Меню' },
+                { text: '📋 Мои заказы' }
+            ],
+            [
+                { text: '📊 Статус заказа' },
+                { text: 'ℹ️ Помощь' }
+            ]
+        ],
+        resize_keyboard: true, // Автоматически подстраивать размер кнопок
+        one_time_keyboard: false // Клавиатура остается видимой
+    };
+}
 
 // ============================================
 // ОСНОВНЫЕ КОМАНДЫ БОТА
 // ============================================
 
-// Команда /start - приветствие и запуск Web App
+// Команда /start - приветствие и показ панели бота
 bot.start(async (ctx) => {
-    console.log('✅ Команда /start получена от пользователя:', ctx.from.id, ctx.from.username || 'без username');
-    const welcomeMessage = `
+    try {
+        console.log('\n📋 === ОБРАБОТКА КОМАНДЫ /start ===');
+        console.log('✅ Команда /start получена от пользователя:', ctx.from.id, ctx.from.username || 'без username');
+        console.log('WEB_APP_URL из .env:', process.env.WEB_APP_URL);
+        
+        const webAppUrl = process.env.WEB_APP_URL || 'https://your-domain.com';
+        console.log('Используемый URL для Web App:', webAppUrl);
+        
+        const welcomeMessage = `
 🍕 Добро пожаловать в гастропаб БУНКЕР!
 
-Я помогу вам сделать заказ. Нажмите на кнопку ниже, чтобы открыть меню:
+Я помогу вам сделать заказ. Используйте кнопки ниже для навигации:
+
+• 🍕 Меню - открыть меню и оформить заказ
+• 📋 Мои заказы - посмотреть ваши заказы
+• 📊 Статус заказа - узнать статус последнего заказа
+• ℹ️ Помощь - справка по боту
+
+Используйте кнопку "🍕 Меню" ниже для оформления заказа.
     `;
     
-    await ctx.reply(welcomeMessage, {
-        reply_markup: {
-            inline_keyboard: [[
-                {
-                    text: '🍕 Открыть меню',
-                    web_app: { url: process.env.WEB_APP_URL || 'https://your-domain.com' }
-                }
-            ]]
+        console.log('📤 Отправка приветственного сообщения с клавиатурой...');
+        await ctx.reply(welcomeMessage, {
+            reply_markup: getMainKeyboard()
+        });
+        console.log('✅ Ответ на /start отправлен успешно');
+        console.log('📋 === КОМАНДА /start ОБРАБОТАНА ===\n');
+    } catch (error) {
+        console.error('❌ ОШИБКА при обработке команды /start:', error);
+        console.error('Детали ошибки:', error.message);
+        console.error('Stack trace:', error.stack);
+        try {
+            await ctx.reply('❌ Произошла ошибка. Попробуйте еще раз.');
+        } catch (replyError) {
+            console.error('❌ Ошибка при отправке сообщения об ошибке:', replyError);
         }
-    });
-    console.log('✅ Ответ на /start отправлен');
+    }
 });
 
-// Команда /menu - открыть меню
+// Команда /menu - открыть Web App с меню ресторана
 bot.command('menu', async (ctx) => {
-    console.log('✅ Команда /menu получена от пользователя:', ctx.from.id);
-    await ctx.reply('🍕 Откройте меню для оформления заказа:', {
-        reply_markup: {
-            inline_keyboard: [[
-                {
-                    text: '🍕 Открыть меню',
-                    web_app: { url: process.env.WEB_APP_URL || 'https://your-domain.com' }
-                }
-            ]]
+    try {
+        console.log('\n📋 === ОБРАБОТКА КОМАНДЫ /menu ===');
+        console.log('✅ Команда /menu получена от пользователя:', ctx.from.id);
+        console.log('WEB_APP_URL из .env:', process.env.WEB_APP_URL);
+        
+        const webAppUrl = process.env.WEB_APP_URL || 'https://your-domain.com';
+        console.log('Используемый URL для Web App:', webAppUrl);
+        
+        console.log('📤 Отправка сообщения с кнопкой Web App...');
+        await ctx.reply('🍕 Откройте меню для оформления заказа:', {
+            reply_markup: {
+                inline_keyboard: [[
+                    {
+                        text: '🍕 Открыть меню',
+                        web_app: { url: webAppUrl }
+                    }
+                ]]
+            }
+        });
+        console.log('✅ Ответ на /menu отправлен успешно');
+        console.log('📋 === КОМАНДА /menu ОБРАБОТАНА ===\n');
+    } catch (error) {
+        console.error('❌ ОШИБКА при обработке команды /menu:', error);
+        console.error('Детали ошибки:', error.message);
+        console.error('Stack trace:', error.stack);
+        try {
+            await ctx.reply('❌ Произошла ошибка при открытии меню. Попробуйте еще раз.');
+        } catch (replyError) {
+            console.error('❌ Ошибка при отправке сообщения об ошибке:', replyError);
         }
-    });
-    console.log('✅ Ответ на /menu отправлен');
+    }
 });
 
 // Команда /help - помощь
@@ -112,8 +175,45 @@ bot.command('orders', async (ctx) => {
         message += `   Статус: ${order.status || 'Принят'}\n\n`;
     });
     
-    await ctx.reply(message);
+    await ctx.reply(message, {
+        reply_markup: getMainKeyboard()
+    });
     console.log('✅ Ответ на /orders отправлен (есть заказы)');
+});
+
+// Команда /status - показать статус последнего заказа
+bot.command('status', async (ctx) => {
+    console.log('✅ Команда /status получена от пользователя:', ctx.from.id);
+    const userId = ctx.from.id;
+    const userOrders = orders.filter(order => order.user?.id === userId);
+    
+    if (userOrders.length === 0) {
+        await ctx.reply('У вас пока нет заказов. Сделайте первый заказ через меню! 🍕', {
+            reply_markup: getMainKeyboard()
+        });
+        console.log('✅ Ответ на /status отправлен (нет заказов)');
+        return;
+    }
+    
+    // Берем последний заказ
+    const lastOrder = userOrders[userOrders.length - 1];
+    const date = new Date(lastOrder.createdAt || lastOrder.timestamp).toLocaleString('ru-RU');
+    
+    const statusMessage = `
+📊 <b>Статус вашего заказа</b>
+
+📋 Номер заказа: <code>${lastOrder.orderId}</code>
+📅 Дата: ${date}
+💰 Сумма: ${lastOrder.total} ₽
+🚚 Тип: ${lastOrder.deliveryType === 'pickup' ? 'Самовывоз' : 'Доставка'}
+📊 Статус: ${lastOrder.status === 'new' ? '🆕 Новый' : lastOrder.status === 'processing' ? '⏳ В обработке' : lastOrder.status === 'ready' ? '✅ Готов' : lastOrder.status === 'delivered' ? '🚚 Доставлен' : '❓ Неизвестно'}
+    `;
+    
+    await ctx.reply(statusMessage, {
+        parse_mode: 'HTML',
+        reply_markup: getMainKeyboard()
+    });
+    console.log('✅ Ответ на /status отправлен');
 });
 
 // Команда /stats - статистика (только для администратора)
@@ -156,6 +256,101 @@ bot.command('stats', async (ctx) => {
     console.log('\n📊 Статистика запрошена администратором:');
     console.log('Всего заказов:', totalOrders);
     console.log('Все заказы:', orders.map(o => ({ id: o.orderId, total: o.total, time: o.createdAt })));
+});
+
+// Команда /testorder - тестовая отправка заказа (для диагностики)
+bot.command('testorder', async (ctx) => {
+    try {
+        console.log('\n🧪 === НАЧАЛО ОБРАБОТКИ /testorder ===');
+        console.log('✅ Команда /testorder получена от пользователя:', ctx.from.id);
+        
+        // Создаем тестовый заказ
+        console.log('📝 Создание тестового заказа...');
+        const testOrder = {
+            items: [{ id: 1, name: 'Тестовая пицца', quantity: 1, price: 500 }],
+            subtotal: 500,
+            deliveryCost: 0,
+            total: 500,
+            user: ctx.from,
+            timestamp: new Date().toISOString(),
+            cutlery: 0,
+            paymentMethod: 'cod',
+            phone: '+79999999999',
+            deliveryType: 'pickup',
+            recipientName: 'Тестовый пользователь',
+            address: 'Тестовый адрес',
+            addressDetails: {}
+        };
+        console.log('✅ Тестовый заказ создан:', testOrder);
+        
+        // Добавляем статус и ID заказа
+        console.log('🆔 Генерация ID заказа...');
+        const order = {
+            ...testOrder,
+            orderId: `TEST-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+            status: 'new',
+            createdAt: new Date().toISOString()
+        };
+        console.log('✅ ID заказа сгенерирован:', order.orderId);
+        
+        // Сохраняем заказ
+        console.log('💾 Сохранение заказа в массив orders...');
+        console.log('   Текущее количество заказов ДО:', orders.length);
+        orders.push(order);
+        console.log('💾 Тестовый заказ сохранен в массив orders');
+        console.log('📊 Всего заказов в системе ПОСЛЕ:', orders.length);
+        console.log('📋 Проверка сохранения:', orders.length > 0 ? '✅ Заказ сохранен' : '❌ Заказ НЕ сохранен');
+        
+        // Формируем сообщение
+        console.log('📝 Формирование сообщения о заказе...');
+        const orderMessage = formatOrderMessage(order);
+        console.log('✅ Сообщение сформировано');
+        
+        // Отправляем подтверждение
+        console.log('📤 Отправка подтверждения пользователю...');
+        await ctx.reply(orderMessage, {
+            parse_mode: 'HTML',
+            reply_markup: getMainKeyboard()
+        });
+        console.log('✅ Подтверждение отправлено пользователю');
+        
+        // Уведомляем администраторов
+        console.log('📤 Отправка уведомлений администраторам...');
+        await notifyAdmins(ctx, order);
+        console.log('✅ Уведомления администраторам отправлены');
+        
+        await ctx.reply('✅ Тестовый заказ создан и обработан! Проверьте команду /stats', {
+            reply_markup: getMainKeyboard()
+        });
+        console.log('✅ Тестовый заказ обработан');
+        console.log('🧪 === ЗАВЕРШЕНИЕ ОБРАБОТКИ /testorder ===\n');
+    } catch (error) {
+        console.error('❌ ОШИБКА при обработке /testorder:', error);
+        console.error('Детали ошибки:', error.message);
+        console.error('Stack trace:', error.stack);
+        try {
+            await ctx.reply('❌ Произошла ошибка при создании тестового заказа: ' + error.message);
+        } catch (replyError) {
+            console.error('❌ Ошибка при отправке сообщения об ошибке:', replyError);
+        }
+    }
+});
+
+// Команда /test - простая проверка работы бота
+bot.command('test', async (ctx) => {
+    console.log('\n🧪 === ОБРАБОТКА КОМАНДЫ /test ===');
+    console.log('✅ Команда /test получена от пользователя:', ctx.from.id);
+    console.log('   Имя:', ctx.from.first_name);
+    console.log('   Username:', ctx.from.username);
+    try {
+        await ctx.reply('✅ Бот работает! Команда /test получена и обработана.');
+        console.log('✅ Ответ на /test отправлен');
+        console.log('🧪 === КОМАНДА /test ОБРАБОТАНА ===\n');
+    } catch (error) {
+        console.error('❌ ОШИБКА при обработке /test:', error);
+        console.error('Детали ошибки:', error.message);
+        console.error('Stack trace:', error.stack);
+    }
 });
 
 // Команда /allorders - показать все заказы (только для администратора)
@@ -203,46 +398,242 @@ bot.command('allorders', async (ctx) => {
 // Обрабатываем ВСЕ типы обновлений для диагностики
 
 // Обработчик для ВСЕХ обновлений (для диагностики)
+// ВАЖНО: Этот middleware должен быть ПОСЛЕ регистрации команд, чтобы не мешать их обработке
 bot.use(async (ctx, next) => {
-    console.log('\n🔔 ПОЛУЧЕНО ОБНОВЛЕНИЕ');
-    console.log('Тип обновления:', ctx.updateType);
-    console.log('Время:', new Date().toISOString());
-    
-    if (ctx.updateType === 'message') {
-        console.log('📨 Это сообщение');
-        console.log('Текст:', ctx.message?.text || 'нет текста');
-        console.log('isCommand:', ctx.message?.text?.startsWith('/') || false);
-        console.log('hasWebApp:', !!ctx.message?.web_app);
-        console.log('hasWebAppData:', !!ctx.message?.web_app_data);
+    try {
+        console.log('\n🔔 ПОЛУЧЕНО ОБНОВЛЕНИЕ');
+        console.log('Тип обновления:', ctx.updateType);
+        console.log('Время:', new Date().toISOString());
+        console.log('Update ID:', ctx.update.update_id);
+        
+        // Если это команда, сразу передаем управление дальше (команды обрабатываются отдельно)
+        if (ctx.updateType === 'message' && ctx.message?.text?.startsWith('/')) {
+            console.log('📝 Это команда, передаю управление обработчику команд...');
+            await next();
+            console.log('✅ Команда обработана');
+            return;
+        }
+        
+        // Логируем ПОЛНУЮ структуру обновления для диагностики (только для не-команд и не-кнопок)
+        if (ctx.updateType === 'message' && 
+            !['🍕 Меню', '📋 Мои заказы', '📊 Статус заказа', 'ℹ️ Помощь'].includes(ctx.message?.text)) {
+            const updateStr = JSON.stringify(ctx.update, null, 2);
+            console.log('📋 Полная структура обновления:');
+            console.log(updateStr);
+        }
+        
+        if (ctx.updateType === 'message') {
+            console.log('📨 Это сообщение');
+            console.log('Текст:', ctx.message?.text || 'нет текста');
+            console.log('isCommand:', ctx.message?.text?.startsWith('/') || false);
+            console.log('hasWebApp:', !!ctx.message?.web_app);
+            console.log('hasWebAppData:', !!ctx.message?.web_app_data);
+            
+            // Детальная проверка web_app_data
+            if (ctx.message?.web_app_data) {
+                console.log('🎯🎯🎯 web_app_data ОБНАРУЖЕН!');
+                console.log('web_app_data структура:', JSON.stringify(ctx.message.web_app_data, null, 2));
+                console.log('web_app_data.data:', ctx.message.web_app_data.data);
+                console.log('web_app_data.data тип:', typeof ctx.message.web_app_data.data);
+                console.log('web_app_data.data длина:', ctx.message.web_app_data.data?.length);
+            } else {
+                console.log('❌ web_app_data НЕ найден в сообщении');
+                console.log('Все ключи message:', Object.keys(ctx.message || {}));
+                
+                // Проверяем все возможные варианты
+                if (ctx.message?.web_app) {
+                    console.log('⚠️ Найден web_app, но не web_app_data');
+                    console.log('web_app:', JSON.stringify(ctx.message.web_app, null, 2));
+                }
+            }
+        }
+        
+        console.log('⏭️ Переход к следующему обработчику...');
+        await next();
+        console.log('✅ Обработчик завершен успешно');
+    } catch (error) {
+        console.error('❌ ОШИБКА в middleware обработчике:', error);
+        console.error('Детали ошибки:', error.message);
+        console.error('Stack trace:', error.stack);
+        throw error; // Пробрасываем ошибку дальше
     }
-    
-    return next();
 });
 
+// Специальный обработчик ТОЛЬКО для web_app_data (высший приоритет)
+// ВАЖНО: Заказы обрабатываются ТОЛЬКО через web_app_data (кнопка "Открыть меню")
+bot.on('message:web_app_data', async (ctx) => {
+    console.log('\n🎯🎯🎯 СПЕЦИАЛЬНЫЙ ОБРАБОТЧИК ДЛЯ WEB_APP_DATA ВЫЗВАН!');
+    console.log('web_app_data:', ctx.message.web_app_data);
+    console.log('web_app_data.data:', ctx.message.web_app_data.data);
+    
+    try {
+        const orderData = JSON.parse(ctx.message.web_app_data.data);
+        console.log('✅ Данные успешно распарсены:', orderData);
+        
+        // Добавляем статус и ID заказа
+        const order = {
+            ...orderData,
+            orderId: `ORD-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+            status: 'new',
+            createdAt: new Date().toISOString(),
+            user: ctx.from // Сохраняем информацию о пользователе
+        };
+        
+        // Сохраняем заказ
+        orders.push(order);
+        console.log('💾 Заказ сохранен в массив orders');
+        console.log('📊 Всего заказов в системе:', orders.length);
+        
+        // Формируем сообщение для пользователя
+        const orderMessage = formatOrderMessage(order, true);
+        
+        // Отправляем подтверждение пользователю
+        const customerMsg = await ctx.reply(orderMessage, {
+            parse_mode: 'HTML',
+            reply_markup: getMainKeyboard()
+        });
+        console.log('✅ Подтверждение отправлено пользователю');
+        console.log('   Message ID:', customerMsg.message_id);
+        
+        // Сохраняем message_id для заказчика
+        orderMessages.set(order.orderId, {
+            customerMessageId: customerMsg.message_id,
+            customerChatId: ctx.from.id
+        });
+        
+        // Уведомляем администраторов
+        await notifyAdmins(ctx, order);
+        console.log('✅ Уведомления администраторам отправлены');
+        
+    } catch (error) {
+        console.error('❌ Ошибка обработки данных из Web App:', error);
+        console.error('Stack trace:', error.stack);
+        await ctx.reply('❌ Произошла ошибка при обработке заказа. Пожалуйста, попробуйте еще раз.');
+    }
+});
+
+// ============================================
+// ОБРАБОТЧИКИ КНОПОК КЛАВИАТУРЫ
+// ============================================
+
+// Обработчик нажатий кнопок клавиатуры
+// Обработчик кнопки "Меню" в Reply Keyboard
+// Эта кнопка открывает Web App для создания заказа
+bot.hears(['🍕 Меню', 'Меню'], async (ctx) => {
+    console.log('✅ Нажата кнопка "Меню" в Reply Keyboard');
+    const webAppUrl = process.env.WEB_APP_URL || 'https://your-domain.com';
+    console.log('Web App URL:', webAppUrl);
+    
+    await ctx.reply('🍕 Откройте меню для оформления заказа:', {
+        reply_markup: {
+            inline_keyboard: [[
+                {
+                    text: '🍕 Открыть меню',
+                    web_app: { url: webAppUrl }
+                }
+            ]]
+        }
+    });
+    console.log('✅ Сообщение с кнопкой Web App отправлено');
+});
+
+bot.hears(['📋 Мои заказы', 'Мои заказы'], async (ctx) => {
+    console.log('✅ Нажата кнопка "Мои заказы"');
+    const userId = ctx.from.id;
+    const userOrders = orders.filter(order => order.user?.id === userId);
+    
+    if (userOrders.length === 0) {
+        await ctx.reply('У вас пока нет заказов. Сделайте первый заказ через меню! 🍕', {
+            reply_markup: getMainKeyboard()
+        });
+        return;
+    }
+    
+    let message = `📋 Ваши заказы (${userOrders.length}):\n\n`;
+    
+    userOrders.slice(-5).reverse().forEach((order, index) => {
+        const date = new Date(order.timestamp || order.createdAt).toLocaleString('ru-RU');
+        message += `${index + 1}. Заказ от ${date}\n`;
+        message += `   Сумма: ${order.total} ₽\n`;
+        message += `   Тип: ${order.deliveryType === 'pickup' ? 'Самовывоз' : 'Доставка'}\n`;
+        message += `   Статус: ${order.status || 'Принят'}\n\n`;
+    });
+    
+    await ctx.reply(message, {
+        reply_markup: getMainKeyboard()
+    });
+});
+
+bot.hears(['📊 Статус заказа', 'Статус заказа'], async (ctx) => {
+    console.log('✅ Нажата кнопка "Статус заказа"');
+    const userId = ctx.from.id;
+    const userOrders = orders.filter(order => order.user?.id === userId);
+    
+    if (userOrders.length === 0) {
+        await ctx.reply('У вас пока нет заказов. Сделайте первый заказ через меню! 🍕', {
+            reply_markup: getMainKeyboard()
+        });
+        return;
+    }
+    
+    const lastOrder = userOrders[userOrders.length - 1];
+    const date = new Date(lastOrder.createdAt || lastOrder.timestamp).toLocaleString('ru-RU');
+    
+    const statusMessage = `
+📊 <b>Статус вашего заказа</b>
+
+📋 Номер заказа: <code>${lastOrder.orderId}</code>
+📅 Дата: ${date}
+💰 Сумма: ${lastOrder.total} ₽
+🚚 Тип: ${lastOrder.deliveryType === 'pickup' ? 'Самовывоз' : 'Доставка'}
+📊 Статус: ${lastOrder.status === 'new' ? '🆕 Новый' : lastOrder.status === 'processing' ? '⏳ В обработке' : lastOrder.status === 'ready' ? '✅ Готов' : lastOrder.status === 'delivered' ? '🚚 Доставлен' : '❓ Неизвестно'}
+    `;
+    
+    await ctx.reply(statusMessage, {
+        parse_mode: 'HTML',
+        reply_markup: getMainKeyboard()
+    });
+});
+
+bot.hears(['ℹ️ Помощь', 'Помощь'], async (ctx) => {
+    console.log('✅ Нажата кнопка "Помощь"');
+    const helpText = `
+📖 Доступные команды:
+
+/start - Начать работу с ботом
+/menu - Открыть меню
+/help - Показать эту справку
+/orders - Посмотреть мои заказы
+/status - Статус последнего заказа
+/stats - Статистика заказов (только для администратора)
+
+💡 Используйте кнопки клавиатуры для быстрого доступа к функциям
+💡 Кнопка меню внизу экрана открывает Web App с меню
+    `;
+    await ctx.reply(helpText, {
+        reply_markup: getMainKeyboard()
+    });
+});
+
+// Обработчик для всех сообщений (web_app_data обрабатывается отдельно)
+// ВАЖНО: Заказы обрабатываются ТОЛЬКО через web_app_data (кнопка "Открыть меню")
 bot.on('message', async (ctx) => {
     // Пропускаем команды - они обрабатываются отдельно
     if (ctx.message?.text && ctx.message.text.startsWith('/')) {
         return; // Команды обрабатываются bot.command()
     }
     
-    // Логируем все входящие сообщения для отладки
-    console.log('\n=== ПОЛУЧЕНО СООБЩЕНИЕ ===');
+    // Пропускаем web_app_data - обрабатывается в bot.on('message:web_app_data')
+    if (ctx.message?.web_app_data?.data) {
+        return; // Обрабатывается отдельным обработчиком
+    }
+    
+    // Логируем остальные сообщения для отладки
+    console.log('\n=== ПОЛУЧЕНО ОБЫЧНОЕ СООБЩЕНИЕ ===');
     console.log('Время:', new Date().toISOString());
     console.log('Тип сообщения:', ctx.message?.text ? 'text' : 'other');
-    console.log('hasWebApp:', !!ctx.message?.web_app);
-    console.log('hasWebAppData:', !!ctx.message?.web_app_data);
+    console.log('Текст сообщения:', ctx.message?.text || 'нет текста');
     console.log('Ключи объекта message:', Object.keys(ctx.message || {}));
-    
-    // Детальный вывод структуры сообщения
-    if (ctx.message?.web_app_data) {
-        console.log('📦 web_app_data найден:', JSON.stringify(ctx.message.web_app_data, null, 2));
-    }
-    if (ctx.message?.web_app) {
-        console.log('📦 web_app найден:', JSON.stringify(ctx.message.web_app, null, 2));
-    }
-    
-    // Полное сообщение (первые 500 символов для читаемости)
-    const fullMessage = JSON.stringify(ctx.message, null, 2);
     console.log('Полное сообщение (первые 500 символов):', fullMessage.substring(0, 500));
     
     // Проверяем данные от Web App в разных возможных форматах
@@ -330,14 +721,38 @@ bot.on('message', async (ctx) => {
 // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
 // ============================================
 
-// Форматирование сообщения о заказе
-function formatOrderMessage(order) {
+// Форматирование сообщения о заказе для заказчика
+function formatOrderMessage(order, showStatus = true) {
     const deliveryTypeText = order.deliveryType === 'pickup' ? 'Самовывоз' : 'Доставка';
     const paymentMethodText = order.paymentMethod === 'cod' ? 'При получении' : 'Онлайн';
     
+    // Статусы заказа
+    const statusEmoji = {
+        'new': '🆕',
+        'accepted': '✅',
+        'cooking': '👨‍🍳',
+        'delivering': '🚚',
+        'completed': '🎉',
+        'cancelled': '❌'
+    };
+    
+    const statusText = {
+        'new': 'Новый',
+        'accepted': 'Принят',
+        'cooking': 'Готовится',
+        'delivering': 'Доставляется',
+        'completed': 'Завершен',
+        'cancelled': 'Отменен'
+    };
+    
+    let statusLine = '';
+    if (showStatus && order.status) {
+        statusLine = `\n📊 Статус: ${statusEmoji[order.status] || '❓'} ${statusText[order.status] || order.status}\n`;
+    }
+    
     let message = `
-✅ <b>Заказ принят!</b>
-
+${order.status === 'cancelled' ? '❌' : '✅'} <b>${order.status === 'cancelled' ? 'Заказ отменен' : order.status === 'completed' ? 'Заказ завершен!' : 'Заказ принят!'}</b>
+${statusLine}
 📋 Номер заказа: <code>${order.orderId}</code>
 👤 Получатель: ${order.recipientName}
 📞 Телефон: ${order.phone}
@@ -370,9 +785,99 @@ function formatOrderMessage(order) {
         message += `\n📍 Забрать заказ можно по адресу:\nг. Шахты, ул. Советская, дом 235 «Бункер»`;
     }
     
-    message += `\n\n⏰ Мы свяжемся с вами в ближайшее время!`;
+    if (order.status === 'cancelled') {
+        message += `\n\n❌ Заказ был отменен администратором.`;
+    } else if (order.status === 'completed') {
+        message += `\n\n🎉 Спасибо за заказ! Приятного аппетита!`;
+    } else {
+        message += `\n\n⏰ Мы свяжемся с вами в ближайшее время!`;
+    }
     
     return message;
+}
+
+// Форматирование сообщения о заказе для администратора
+function formatAdminOrderMessage(order) {
+    const deliveryTypeText = order.deliveryType === 'pickup' ? 'Самовывоз' : 'Доставка';
+    const paymentMethodText = order.paymentMethod === 'cod' ? 'При получении' : 'Онлайн';
+    
+    const statusEmoji = {
+        'new': '🆕',
+        'accepted': '✅',
+        'cooking': '👨‍🍳',
+        'delivering': '🚚',
+        'completed': '🎉',
+        'cancelled': '❌'
+    };
+    
+    const statusText = {
+        'new': 'Новый',
+        'accepted': 'Принят',
+        'cooking': 'Готовится',
+        'delivering': 'Доставляется',
+        'completed': 'Завершен',
+        'cancelled': 'Отменен'
+    };
+    
+    let message = `
+🔔 <b>Новый заказ!</b>
+
+📋 Номер: <code>${order.orderId}</code>
+📊 Статус: ${statusEmoji[order.status] || '❓'} ${statusText[order.status] || order.status}
+👤 Клиент: ${order.recipientName}
+📞 Телефон: ${order.phone}
+🚚 Тип: ${deliveryTypeText}
+💳 Оплата: ${paymentMethodText}
+    `;
+    
+    if (order.deliveryType === 'delivery' && order.address) {
+        message += `📍 Адрес: ${order.address}\n`;
+        if (order.addressDetails?.apartment) {
+            message += `   Квартира: ${order.addressDetails.apartment}\n`;
+        }
+        if (order.addressDetails?.comment) {
+            message += `   Комментарий: ${order.addressDetails.comment}\n`;
+        }
+    }
+    
+    message += `\n🛒 <b>Состав заказа:</b>\n`;
+    order.items.forEach(item => {
+        message += `   • ${item.name} × ${item.quantity} = ${item.price * item.quantity} ₽\n`;
+    });
+    
+    if (order.cutlery > 0) {
+        message += `   • Приборы: ${order.cutlery} шт.\n`;
+    }
+    
+    message += `\n💰 <b>Итого: ${order.total} ₽</b>`;
+    
+    return message;
+}
+
+// Получение inline клавиатуры для управления статусом заказа
+function getOrderStatusKeyboard(orderId, currentStatus) {
+    const keyboard = [];
+    
+    if (currentStatus === 'new') {
+        keyboard.push([
+            { text: '✅ Принять', callback_data: `order_accept_${orderId}` },
+            { text: '❌ Отклонить', callback_data: `order_reject_${orderId}` }
+        ]);
+    } else if (currentStatus === 'accepted') {
+        keyboard.push([
+            { text: '👨‍🍳 Готовить', callback_data: `order_cooking_${orderId}` }
+        ]);
+    } else if (currentStatus === 'cooking') {
+        keyboard.push([
+            { text: '🚚 Доставляется', callback_data: `order_delivering_${orderId}` }
+        ]);
+    } else if (currentStatus === 'delivering') {
+        keyboard.push([
+            { text: '🎉 Завершен', callback_data: `order_completed_${orderId}` }
+        ]);
+    }
+    
+    return keyboard.length > 0 ? { inline_keyboard: keyboard } : null;
 }
 
 // Уведомление администраторов о новом заказе
@@ -389,23 +894,31 @@ async function notifyAdmins(ctx, order) {
         return;
     }
     
-    const adminMessage = `
-🔔 <b>Новый заказ!</b>
-
-📋 Номер: <code>${order.orderId}</code>
-👤 Клиент: ${order.recipientName}
-📞 Телефон: ${order.phone}
-💰 Сумма: ${order.total} ₽
-🚚 Тип: ${order.deliveryType === 'pickup' ? 'Самовывоз' : 'Доставка'}
-    `;
+    const adminMessage = formatAdminOrderMessage(order);
+    const keyboard = getOrderStatusKeyboard(order.orderId, order.status);
     
     console.log('Отправка уведомлений администраторам...');
     
     for (const adminId of adminIds) {
         try {
             console.log(`Отправка уведомления администратору ${adminId}...`);
-            await bot.telegram.sendMessage(adminId, adminMessage, { parse_mode: 'HTML' });
+            const msg = await bot.telegram.sendMessage(adminId, adminMessage, { 
+                parse_mode: 'HTML',
+                reply_markup: keyboard
+            });
             console.log(`✅ Уведомление успешно отправлено администратору ${adminId}`);
+            console.log('   Message ID:', msg.message_id);
+            
+            // Сохраняем message_id для администратора
+            const existing = orderMessages.get(order.orderId) || {};
+            if (!existing.adminMessages) {
+                existing.adminMessages = [];
+            }
+            existing.adminMessages.push({
+                messageId: msg.message_id,
+                adminId: adminId
+            });
+            orderMessages.set(order.orderId, existing);
         } catch (error) {
             console.error(`❌ Ошибка отправки уведомления администратору ${adminId}:`, error.message);
             if (error.response) {
@@ -414,6 +927,145 @@ async function notifyAdmins(ctx, order) {
         }
     }
 }
+
+// ============================================
+// ОБРАБОТКА CALLBACK QUERY (ИЗМЕНЕНИЕ СТАТУСА ЗАКАЗА)
+// ============================================
+
+bot.action(/^order_(accept|reject|cooking|delivering|completed)_(.+)$/, async (ctx) => {
+    try {
+        const action = ctx.match[1]; // accept, reject, cooking, delivering, completed
+        const orderId = ctx.match[2];
+        
+        console.log(`\n🔄 Обработка изменения статуса заказа: ${action} для заказа ${orderId}`);
+        console.log('Пользователь:', ctx.from.id, ctx.from.username);
+        
+        // Проверяем права администратора
+        const adminIds = (process.env.ADMIN_IDS || '').split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
+        if (!adminIds.includes(ctx.from.id)) {
+            await ctx.answerCbQuery('❌ У вас нет прав для изменения статуса заказа.');
+            console.log('❌ Доступ запрещен для пользователя:', ctx.from.id);
+            return;
+        }
+        
+        // Находим заказ
+        const order = orders.find(o => o.orderId === orderId);
+        if (!order) {
+            await ctx.answerCbQuery('❌ Заказ не найден.');
+            console.log('❌ Заказ не найден:', orderId);
+            return;
+        }
+        
+        // Определяем новый статус
+        let newStatus;
+        let statusText;
+        switch (action) {
+            case 'accept':
+                newStatus = 'accepted';
+                statusText = '✅ Заказ принят!';
+                break;
+            case 'reject':
+                newStatus = 'cancelled';
+                statusText = '❌ Заказ отменен.';
+                break;
+            case 'cooking':
+                newStatus = 'cooking';
+                statusText = '👨‍🍳 Заказ готовится!';
+                break;
+            case 'delivering':
+                newStatus = 'delivering';
+                statusText = '🚚 Заказ доставляется!';
+                break;
+            case 'completed':
+                newStatus = 'completed';
+                statusText = '🎉 Заказ завершен!';
+                break;
+            default:
+                await ctx.answerCbQuery('❌ Неизвестное действие.');
+                return;
+        }
+        
+        // Обновляем статус заказа
+        order.status = newStatus;
+        order.updatedAt = new Date().toISOString();
+        console.log(`✅ Статус заказа ${orderId} изменен на: ${newStatus}`);
+        
+        // Обновляем сообщение администратора
+        const adminMessage = formatAdminOrderMessage(order);
+        const keyboard = getOrderStatusKeyboard(order.orderId, newStatus);
+        
+        const orderMsg = orderMessages.get(orderId);
+        if (orderMsg && orderMsg.adminMessages) {
+            for (const adminMsg of orderMsg.adminMessages) {
+                try {
+                    await bot.telegram.editMessageText(
+                        adminMsg.adminId,
+                        adminMsg.messageId,
+                        null,
+                        adminMessage,
+                        {
+                            parse_mode: 'HTML',
+                            reply_markup: keyboard
+                        }
+                    );
+                    console.log(`✅ Сообщение администратора обновлено (${adminMsg.adminId})`);
+                } catch (error) {
+                    console.error(`❌ Ошибка обновления сообщения администратора:`, error.message);
+                }
+            }
+        }
+        
+        // Уведомляем заказчика об изменении статуса
+        if (orderMsg && orderMsg.customerChatId) {
+            try {
+                const customerMessage = formatOrderMessage(order, true);
+                await bot.telegram.editMessageText(
+                    orderMsg.customerChatId,
+                    orderMsg.customerMessageId,
+                    null,
+                    customerMessage,
+                    {
+                        parse_mode: 'HTML'
+                    }
+                );
+                console.log(`✅ Сообщение заказчика обновлено`);
+                
+                // Отправляем дополнительное уведомление
+                await bot.telegram.sendMessage(
+                    orderMsg.customerChatId,
+                    `📢 ${statusText}`,
+                    { reply_markup: getMainKeyboard() }
+                );
+            } catch (error) {
+                console.error(`❌ Ошибка обновления сообщения заказчика:`, error.message);
+                // Если не удалось обновить, отправляем новое сообщение
+                try {
+                    const customerMessage = formatOrderMessage(order, true);
+                    await bot.telegram.sendMessage(
+                        orderMsg.customerChatId,
+                        customerMessage,
+                        { parse_mode: 'HTML', reply_markup: getMainKeyboard() }
+                    );
+                    await bot.telegram.sendMessage(
+                        orderMsg.customerChatId,
+                        `📢 ${statusText}`,
+                        { reply_markup: getMainKeyboard() }
+                    );
+                } catch (sendError) {
+                    console.error(`❌ Ошибка отправки сообщения заказчику:`, sendError.message);
+                }
+            }
+        }
+        
+        await ctx.answerCbQuery(statusText);
+        console.log(`✅ Статус заказа ${orderId} успешно изменен на ${newStatus}`);
+        
+    } catch (error) {
+        console.error('❌ Ошибка при изменении статуса заказа:', error);
+        console.error('Stack trace:', error.stack);
+        await ctx.answerCbQuery('❌ Произошла ошибка при изменении статуса.');
+    }
+});
 
 // ============================================
 // ОБРАБОТКА ОШИБОК
@@ -441,10 +1093,17 @@ async function startBot() {
         console.log('✅ Webhook удален (если был установлен)');
         
         // Запускаем polling
+        // ВАЖНО: получаем ВСЕ типы обновлений, включая web_app_data
+        // allowedUpdates: undefined означает получение всех типов обновлений
         bot.startPolling({
-            allowedUpdates: ['message', 'callback_query'],
+            allowedUpdates: undefined, // Получаем ВСЕ типы обновлений (включая web_app_data)
             dropPendingUpdates: false
         });
+        
+        console.log('⚠️ ВАЖНО: Для работы sendData() необходимо настроить Menu Button в BotFather!');
+        console.log('   BotFather → /mybots → Ваш бот → Bot Settings → Menu Button');
+        console.log('   URL должен быть:', process.env.WEB_APP_URL || 'не указан');
+        console.log('📡 Polling настроен для получения ВСЕХ типов обновлений (включая web_app_data)');
         
         console.log('🤖 Бот запущен и готов к работе!');
         console.log('📱 Web App URL:', process.env.WEB_APP_URL || 'не указан');

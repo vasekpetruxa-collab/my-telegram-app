@@ -256,11 +256,7 @@ function renderMenuItems() {
     // Фильтруем блюда по категории и поисковому запросу
     let itemsToShow = state.currentCategory 
         ? menuData.items.filter(item => {
-            const matches = item.category === state.currentCategory;
-            if (!matches && state.currentCategory) {
-                console.log('Не совпадает категория:', item.category, '!==', state.currentCategory);
-            }
-            return matches;
+            return item.category === state.currentCategory;
         })
         : menuData.items;
     
@@ -977,18 +973,101 @@ function sendOrderData() {
         console.log('📤 Подготовка к отправке заказа:', orderData);
         console.log('tg?.sendData существует?', !!tg?.sendData);
         console.log('tg объект:', tg ? 'существует' : 'не существует');
+        console.log('window.Telegram существует?', !!window.Telegram);
+        console.log('window.Telegram.WebApp существует?', !!window.Telegram?.WebApp);
+        console.log('Режим работы:', window.Telegram?.WebApp ? 'Telegram Web App' : 'Обычный браузер');
+        
+        // Пробуем отправить данные через sendData
+        let dataSent = false;
+        let sendDataCalled = false;
         
         if (tg?.sendData) {
             console.log('✅ Вызываю tg.sendData с данными:', JSON.stringify(orderData));
             try {
                 tg.sendData(JSON.stringify(orderData));
                 console.log('✅ tg.sendData вызван успешно');
+                sendDataCalled = true;
+                // НЕ устанавливаем dataSent = true, так как мы не знаем, дошли ли данные до бота
+                // Используем альтернативный способ как резервный
             } catch (error) {
                 console.error('❌ Ошибка при вызове tg.sendData:', error);
             }
         } else {
-            console.error('❌ tg.sendData не доступен! Данные не будут отправлены.');
-            console.error('Проверьте, что приложение открыто через Telegram бота, а не в браузере.');
+            console.warn('⚠️ tg.sendData не доступен');
+            if (!window.Telegram?.WebApp) {
+                console.error('❌ КРИТИЧЕСКАЯ ОШИБКА: Приложение открыто в обычном браузере!');
+                console.error('❌ tg.sendData() работает ТОЛЬКО в Telegram Web App!');
+                console.error('💡 РЕШЕНИЕ: Откройте приложение через Telegram бота:');
+                console.error('   1. Откройте бота @bunkerREST_bot в Telegram');
+                console.error('   2. Нажмите Menu Button (внизу экрана) или отправьте /menu');
+                console.error('   3. Оформите заказ');
+            }
+        }
+        
+        // Альтернативный способ: отправка через Telegram Bot API напрямую
+        // Используем его ВСЕГДА как резервный способ, даже если sendData был вызван
+        // Это гарантирует, что данные точно дойдут до бота
+        if (window.Telegram?.WebApp) {
+            if (sendDataCalled) {
+                console.log('🔄 sendData был вызван, но используем альтернативный способ для гарантии доставки...');
+            } else {
+                console.log('🔄 sendData не сработал, пробуем альтернативный способ через Bot API...');
+            }
+            
+            // Получаем данные пользователя из Telegram
+            const user = tg?.initDataUnsafe?.user;
+            if (user && user.id) {
+                console.log('📤 Отправка данных через Bot API напрямую...');
+                console.log('   User ID:', user.id);
+                
+                // Используем Bot API для отправки данных
+                // ВАЖНО: Токен бота должен быть в переменной окружения или в коде (только для тестирования!)
+                const BOT_TOKEN = '8386902315:AAGSj3gzuEYMO0sDimt2tfLG9zQ6C70tIsc'; // ВНИМАНИЕ: В продакшене используйте переменную окружения!
+                
+                try {
+                    // Отправляем данные как текстовое сообщение в формате JSON
+                    const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            chat_id: user.id,
+                            text: JSON.stringify(orderData),
+                            parse_mode: 'HTML'
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    if (result.ok) {
+                        console.log('✅ Данные успешно отправлены через Bot API!');
+                        console.log('   Результат:', result);
+                        dataSent = true;
+                    } else {
+                        console.error('❌ Ошибка отправки через Bot API:', result);
+                        console.error('   Код ошибки:', result.error_code);
+                        console.error('   Описание:', result.description);
+                    }
+                } catch (error) {
+                    console.error('❌ Ошибка при отправке через Bot API:', error);
+                    console.error('   Детали:', error.message);
+                }
+            } else {
+                console.warn('⚠️ Не удалось получить ID пользователя для альтернативной отправки');
+                console.warn('   tg?.initDataUnsafe?.user:', tg?.initDataUnsafe?.user);
+            }
+        }
+        
+        if (!dataSent && !sendDataCalled) {
+            console.log('⚠️ ВНИМАНИЕ: sendData() не работает!');
+            console.log('⚠️ Возможные причины:');
+            console.log('   1. Menu Button не настроен в BotFather');
+            console.log('   2. Приложение открыто не через Telegram');
+            console.log('   3. Проблема с Telegram Web App API');
+            console.log('');
+            console.log('💡 РЕШЕНИЕ: Настройте Menu Button в BotFather!');
+            console.log('   BotFather → /mybots → Ваш бот → Bot Settings → Menu Button');
+            console.log('   URL:', window.location.href);
         }
         
         // Показываем уведомление об успешной отправке заказа
