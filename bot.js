@@ -32,6 +32,7 @@ const orders = [];
 
 // Команда /start - приветствие и запуск Web App
 bot.start(async (ctx) => {
+    console.log('✅ Команда /start получена от пользователя:', ctx.from.id, ctx.from.username || 'без username');
     const welcomeMessage = `
 🍕 Добро пожаловать в гастропаб БУНКЕР!
 
@@ -48,11 +49,13 @@ bot.start(async (ctx) => {
             ]]
         }
     });
+    console.log('✅ Ответ на /start отправлен');
 });
 
 // Команда /menu - открыть меню
 bot.command('menu', async (ctx) => {
-    await ctx.reply('Открываю меню...', {
+    console.log('✅ Команда /menu получена от пользователя:', ctx.from.id);
+    await ctx.reply('🍕 Откройте меню для оформления заказа:', {
         reply_markup: {
             inline_keyboard: [[
                 {
@@ -62,10 +65,12 @@ bot.command('menu', async (ctx) => {
             ]]
         }
     });
+    console.log('✅ Ответ на /menu отправлен');
 });
 
 // Команда /help - помощь
 bot.command('help', async (ctx) => {
+    console.log('✅ Команда /help получена от пользователя:', ctx.from.id);
     const helpText = `
 📖 Доступные команды:
 
@@ -74,26 +79,33 @@ bot.command('help', async (ctx) => {
 /help - Показать эту справку
 /orders - Посмотреть мои заказы (только для вас)
 /stats - Статистика заказов (только для администратора)
+/allorders - Все заказы (только для администратора)
 
 💡 Для оформления заказа используйте кнопку "Открыть меню"
     `;
     await ctx.reply(helpText);
+    console.log('✅ Ответ на /help отправлен');
 });
 
 // Команда /orders - показать заказы пользователя
 bot.command('orders', async (ctx) => {
+    console.log('✅ Команда /orders получена от пользователя:', ctx.from.id);
     const userId = ctx.from.id;
     const userOrders = orders.filter(order => order.user?.id === userId);
     
+    console.log('Всего заказов в системе:', orders.length);
+    console.log('Заказов пользователя:', userOrders.length);
+    
     if (userOrders.length === 0) {
         await ctx.reply('У вас пока нет заказов. Сделайте первый заказ через меню! 🍕');
+        console.log('✅ Ответ на /orders отправлен (нет заказов)');
         return;
     }
     
     let message = `📋 Ваши заказы (${userOrders.length}):\n\n`;
     
     userOrders.slice(-5).reverse().forEach((order, index) => {
-        const date = new Date(order.timestamp).toLocaleString('ru-RU');
+        const date = new Date(order.timestamp || order.createdAt).toLocaleString('ru-RU');
         message += `${index + 1}. Заказ от ${date}\n`;
         message += `   Сумма: ${order.total} ₽\n`;
         message += `   Тип: ${order.deliveryType === 'pickup' ? 'Самовывоз' : 'Доставка'}\n`;
@@ -101,19 +113,30 @@ bot.command('orders', async (ctx) => {
     });
     
     await ctx.reply(message);
+    console.log('✅ Ответ на /orders отправлен (есть заказы)');
 });
 
 // Команда /stats - статистика (только для администратора)
 bot.command('stats', async (ctx) => {
+    console.log('✅ Команда /stats получена от пользователя:', ctx.from.id);
     const adminIds = (process.env.ADMIN_IDS || '').split(',').map(id => parseInt(id.trim()));
+    
+    console.log('ADMIN_IDS из .env:', adminIds);
+    console.log('ID пользователя:', ctx.from.id);
+    console.log('Является администратором:', adminIds.includes(ctx.from.id));
     
     if (!adminIds.includes(ctx.from.id)) {
         await ctx.reply('❌ У вас нет доступа к этой команде.');
+        console.log('❌ Доступ запрещен для пользователя:', ctx.from.id);
         return;
     }
     
     const totalOrders = orders.length;
-    const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
+    console.log('📊 Проверка массива orders:');
+    console.log('   Длина массива:', totalOrders);
+    console.log('   Содержимое массива:', JSON.stringify(orders, null, 2));
+    
+    const totalRevenue = orders.reduce((sum, order) => sum + (parseFloat(order.total) || 0), 0);
     const pickupOrders = orders.filter(o => o.deliveryType === 'pickup').length;
     const deliveryOrders = orders.filter(o => o.deliveryType === 'delivery').length;
     
@@ -127,6 +150,49 @@ bot.command('stats', async (ctx) => {
     `;
     
     await ctx.reply(statsMessage);
+    console.log('✅ Ответ на /stats отправлен');
+    
+    // Выводим в консоль для диагностики
+    console.log('\n📊 Статистика запрошена администратором:');
+    console.log('Всего заказов:', totalOrders);
+    console.log('Все заказы:', orders.map(o => ({ id: o.orderId, total: o.total, time: o.createdAt })));
+});
+
+// Команда /allorders - показать все заказы (только для администратора)
+bot.command('allorders', async (ctx) => {
+    console.log('✅ Команда /allorders получена от пользователя:', ctx.from.id);
+    const adminIds = (process.env.ADMIN_IDS || '').split(',').map(id => parseInt(id.trim()));
+    
+    console.log('ADMIN_IDS из .env:', adminIds);
+    console.log('ID пользователя:', ctx.from.id);
+    console.log('Является администратором:', adminIds.includes(ctx.from.id));
+    
+    if (!adminIds.includes(ctx.from.id)) {
+        await ctx.reply('❌ У вас нет доступа к этой команде.');
+        console.log('❌ Доступ запрещен для пользователя:', ctx.from.id);
+        return;
+    }
+    
+    if (orders.length === 0) {
+        await ctx.reply('📋 Заказов пока нет.');
+        console.log('✅ Ответ на /allorders отправлен (нет заказов)');
+        return;
+    }
+    
+    let message = `📋 Все заказы (${orders.length}):\n\n`;
+    
+    orders.slice(-10).reverse().forEach((order, index) => {
+        const date = new Date(order.createdAt || order.timestamp).toLocaleString('ru-RU');
+        message += `${index + 1}. Заказ ${order.orderId || 'N/A'}\n`;
+        message += `   Время: ${date}\n`;
+        message += `   Клиент: ${order.recipientName || 'N/A'}\n`;
+        message += `   Телефон: ${order.phone || 'N/A'}\n`;
+        message += `   Сумма: ${order.total} ₽\n`;
+        message += `   Тип: ${order.deliveryType === 'pickup' ? 'Самовывоз' : 'Доставка'}\n\n`;
+    });
+    
+    await ctx.reply(message);
+    console.log('✅ Ответ на /allorders отправлен (есть заказы)');
 });
 
 // ============================================
@@ -144,6 +210,8 @@ bot.use(async (ctx, next) => {
     
     if (ctx.updateType === 'message') {
         console.log('📨 Это сообщение');
+        console.log('Текст:', ctx.message?.text || 'нет текста');
+        console.log('isCommand:', ctx.message?.text?.startsWith('/') || false);
         console.log('hasWebApp:', !!ctx.message?.web_app);
         console.log('hasWebAppData:', !!ctx.message?.web_app_data);
     }
@@ -225,14 +293,24 @@ bot.on('message', async (ctx) => {
         
         // Сохраняем заказ
         orders.push(order);
+        console.log('💾 Заказ сохранен в массив orders');
+        console.log('📊 Всего заказов в системе:', orders.length);
+        console.log('📋 Последний заказ:', {
+            orderId: order.orderId,
+            total: order.total,
+            recipientName: order.recipientName,
+            phone: order.phone
+        });
         
         // Формируем сообщение для пользователя
         const orderMessage = formatOrderMessage(order);
         
         // Отправляем подтверждение пользователю
+        console.log('📤 Отправка подтверждения пользователю...');
         await ctx.reply(orderMessage, {
             parse_mode: 'HTML'
         });
+        console.log('✅ Подтверждение отправлено пользователю');
         
         // Уведомляем администраторов
         console.log('📤 Вызов функции notifyAdmins...');

@@ -974,8 +974,21 @@ function sendOrderData() {
         
         const orderData = gatherOrderData();
         
+        console.log('📤 Подготовка к отправке заказа:', orderData);
+        console.log('tg?.sendData существует?', !!tg?.sendData);
+        console.log('tg объект:', tg ? 'существует' : 'не существует');
+        
         if (tg?.sendData) {
-            tg.sendData(JSON.stringify(orderData));
+            console.log('✅ Вызываю tg.sendData с данными:', JSON.stringify(orderData));
+            try {
+                tg.sendData(JSON.stringify(orderData));
+                console.log('✅ tg.sendData вызван успешно');
+            } catch (error) {
+                console.error('❌ Ошибка при вызове tg.sendData:', error);
+            }
+        } else {
+            console.error('❌ tg.sendData не доступен! Данные не будут отправлены.');
+            console.error('Проверьте, что приложение открыто через Telegram бота, а не в браузере.');
         }
         
         // Показываем уведомление об успешной отправке заказа
