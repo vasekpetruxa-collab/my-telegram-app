@@ -118,23 +118,43 @@ bot.command('stats', async (ctx) => {
 // Обработка данных, отправленных из Web App
 bot.on('message', async (ctx) => {
     // Логируем все входящие сообщения для отладки
-    console.log('Получено сообщение:', {
-        hasWebApp: !!ctx.message?.web_app,
-        hasWebAppData: !!ctx.message?.web_app_data,
-        messageType: ctx.message?.text ? 'text' : 'other',
-        fullMessage: JSON.stringify(ctx.message, null, 2)
-    });
+    console.log('\n=== ПОЛУЧЕНО СООБЩЕНИЕ ===');
+    console.log('Тип сообщения:', ctx.message?.text ? 'text' : 'other');
+    console.log('hasWebApp:', !!ctx.message?.web_app);
+    console.log('hasWebAppData:', !!ctx.message?.web_app_data);
+    console.log('Полное сообщение:', JSON.stringify(ctx.message, null, 2));
     
-    // Проверяем, есть ли данные от Web App
-    // В Telegraf данные приходят в формате web_app_data.data
-    const webAppData = ctx.message?.web_app_data?.data;
+    // Проверяем данные от Web App в разных возможных форматах
+    let webAppData = null;
+    
+    // Вариант 1: web_app_data.data (стандартный формат Telegraf)
+    if (ctx.message?.web_app_data?.data) {
+        webAppData = ctx.message.web_app_data.data;
+        console.log('✅ Данные найдены в формате: web_app_data.data');
+    }
+    // Вариант 2: web_app.data (альтернативный формат)
+    else if (ctx.message?.web_app?.data) {
+        webAppData = ctx.message.web_app.data;
+        console.log('✅ Данные найдены в формате: web_app.data');
+    }
+    // Вариант 3: текст сообщения содержит JSON (если данные пришли как текст)
+    else if (ctx.message?.text && ctx.message.text.startsWith('{')) {
+        try {
+            JSON.parse(ctx.message.text);
+            webAppData = ctx.message.text;
+            console.log('✅ Данные найдены в формате: text (JSON)');
+        } catch (e) {
+            // Не JSON
+        }
+    }
     
     if (!webAppData) {
         // Если это обычное сообщение, игнорируем
+        console.log('ℹ️ Обычное сообщение, игнорируем');
         return;
     }
     
-    console.log('Найдены данные Web App:', webAppData);
+    console.log('📦 Данные Web App:', webAppData.substring(0, 200) + (webAppData.length > 200 ? '...' : ''));
     
     try {
         // Парсим данные заказа
@@ -162,7 +182,9 @@ bot.on('message', async (ctx) => {
         });
         
         // Уведомляем администраторов
+        console.log('📤 Вызов функции notifyAdmins...');
         await notifyAdmins(ctx, order);
+        console.log('✅ Функция notifyAdmins завершена');
         
         // Здесь можно добавить интеграцию с CRM
         // await saveOrderToCRM(order);

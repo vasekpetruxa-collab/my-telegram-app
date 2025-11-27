@@ -25,7 +25,25 @@ if (window.Telegram && window.Telegram.WebApp) {
             alert(options.title + '\n' + options.message);
         },
         sendData: (data) => {
-            console.log('Отправка данных:', data);
+            console.log('Отправка данных (режим разработки):', data);
+            console.warn('⚠️ В режиме разработки данные не отправляются в бота.');
+            console.warn('⚠️ Для тестирования отправки заказов откройте приложение через Telegram бота.');
+            
+            // Для тестирования в браузере можно отправить данные напрямую в бота через API
+            // Раскомментируйте код ниже, если хотите тестировать в браузере
+            /*
+            const BOT_TOKEN = '8386902315:AAGSj3gzuEYMO0sDimt2tfLG9zQ6C70tIsc'; // ВНИМАНИЕ: Не используйте в продакшене!
+            const TEST_USER_ID = 540298072; // ID для тестирования
+            
+            fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: TEST_USER_ID,
+                    text: `Тестовый заказ (из браузера):\n${data}`
+                })
+            }).catch(err => console.error('Ошибка тестовой отправки:', err));
+            */
         },
         initDataUnsafe: {
             user: {
@@ -798,15 +816,12 @@ function updateCutlery(change) {
 }
 
 function requestPhoneNumber() {
-    if (tg && tg.requestContact) {
-        tg.requestContact((response) => {
-            if (response?.phone_number) {
-                document.getElementById('customerPhone').value = response.phone_number;
-                state.customerPhone = response.phone_number;
-            }
-        });
-    } else {
-        showNotification('Запрос номера не поддерживается в режиме разработки.', 'info');
+    // requestContact не поддерживается в Telegram Web App версии 6.0+
+    // Пользователь должен ввести номер телефона вручную
+    const phoneInput = document.getElementById('customerPhone');
+    if (phoneInput) {
+        phoneInput.focus();
+        showNotification('Введите номер телефона вручную', 'info');
     }
 }
 
@@ -906,48 +921,14 @@ async function searchAddress() {
         return;
     }
     
-    try {
-        showNotification('Поиск адреса...', 'info');
-        
-        // Добавляем заголовки для соблюдения политики использования API Nominatim
-        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&accept-language=ru&q=${encodeURIComponent(query)}`, {
-            headers: {
-                'User-Agent': 'TelegramWebApp/1.0',
-                'Referer': window.location.origin
-            }
-        });
-        
-        if (!response.ok) {
-            // Обработка различных HTTP ошибок
-            if (response.status === 503) {
-                throw new Error('Сервис поиска адресов временно недоступен. Пожалуйста, попробуйте позже или введите адрес вручную.');
-            } else if (response.status === 429) {
-                throw new Error('Слишком много запросов. Пожалуйста, подождите немного и попробуйте снова.');
-            } else if (response.status >= 500) {
-                throw new Error('Ошибка сервера. Пожалуйста, попробуйте позже или введите адрес вручную.');
-            } else {
-                throw new Error(`Ошибка при поиске адреса (код ${response.status}). Попробуйте ввести адрес вручную.`);
-            }
-        }
-        
-        const data = await response.json();
-        state.addressSuggestions = data;
-        if (!data.length) {
-            showNotification('Адрес не найден. Попробуйте уточнить запрос или введите адрес вручную.', 'info');
-        } else {
-            showNotification(`Найдено ${data.length} вариантов`, 'success');
-        }
-        renderAddressSuggestions();
-    } catch (error) {
-        console.error('Ошибка поиска адреса:', error);
-        
-        // Показываем понятное сообщение об ошибке
-        const errorMessage = error.message || 'Не удалось найти адрес. Проверьте подключение к интернету или введите адрес вручную.';
-        showNotification(errorMessage, 'error');
-        
-        state.addressSuggestions = [];
-        renderAddressSuggestions();
-    }
+    // Nominatim API блокирует CORS запросы из браузера
+    // Отключаем автопоиск адресов, пользователь должен ввести адрес вручную
+    showNotification('Введите адрес доставки вручную', 'info');
+    state.addressSuggestions = [];
+    renderAddressSuggestions();
+    
+    // Альтернативный вариант: можно использовать прокси-сервер для запросов к Nominatim
+    // Но для простоты оставляем ручной ввод адреса
 }
 
 function gatherOrderData() {
