@@ -690,16 +690,28 @@ bot.on('message', async (ctx) => {
         // Парсим данные заказа
         const orderData = JSON.parse(webAppData);
         
-        console.log('Получен заказ:', orderData);
+        console.log('✅ Получен заказ из JSON-сообщения:', orderData);
+        console.log('🔍 Проверка структуры заказа:');
+        console.log('   items:', orderData.items?.length || 0, 'позиций');
+        console.log('   total:', orderData.total);
+        console.log('   recipientName:', orderData.recipientName);
+        console.log('   phone:', orderData.phone);
+        console.log('   deliveryType:', orderData.deliveryType);
         
         // Добавляем статус и ID заказа
+        // ВАЖНО: Перезаписываем user на ctx.from, так как это актуальная информация от Telegram
         const order = {
             ...orderData,
             orderId: `ORD-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
             status: 'new',
             createdAt: new Date().toISOString(),
-            user: ctx.from // Сохраняем информацию о пользователе
+            user: ctx.from // Сохраняем информацию о пользователе (перезаписываем, если было в orderData)
         };
+        
+        console.log('🔍 Проверка данных заказа после обработки:');
+        console.log('   orderId:', order.orderId);
+        console.log('   user.id:', order.user?.id);
+        console.log('   user.username:', order.user?.username);
         
         // Сохраняем заказ
         orders.push(order);
