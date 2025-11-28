@@ -718,14 +718,18 @@ bot.on('message', async (ctx) => {
         console.log('   deliveryType:', orderData.deliveryType);
         
         // Добавляем статус и ID заказа
+        // ВАЖНО: Используем orderId из JSON, если он есть (для совместимости с кнопками)
         // ВАЖНО: Перезаписываем user на ctx.from, так как это актуальная информация от Telegram
         const order = {
             ...orderData,
-            orderId: `ORD-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
-            status: 'new',
-            createdAt: new Date().toISOString(),
+            orderId: orderData.orderId || `ORD-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+            status: orderData.status || 'new',
+            createdAt: orderData.createdAt || new Date().toISOString(),
             user: ctx.from // Сохраняем информацию о пользователе (перезаписываем, если было в orderData)
         };
+        
+        console.log('🔍 Используемый orderId:', order.orderId);
+        console.log('   orderId из JSON:', orderData.orderId || 'не указан');
         
         console.log('🔍 Проверка данных заказа после обработки:');
         console.log('   orderId:', order.orderId);
@@ -1010,8 +1014,10 @@ bot.action(/^order_(accept|reject|cooking|delivering|completed)_(.+)$/, async (c
         // Находим заказ
         const order = orders.find(o => o.orderId === orderId);
         if (!order) {
-            await ctx.answerCbQuery('❌ Заказ не найден.');
+            await ctx.answerCbQuery('❌ Заказ не найден. Возможно, он еще обрабатывается.');
             console.log('❌ Заказ не найден:', orderId);
+            console.log('📋 Всего заказов в системе:', orders.length);
+            console.log('📋 ID всех заказов:', orders.map(o => o.orderId));
             return;
         }
         

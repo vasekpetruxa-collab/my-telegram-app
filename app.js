@@ -1144,57 +1144,46 @@ async function sendOrderData() {
                 const customerMessage = formatCustomerOrderMessage(orderWithId);
                 
                 try {
-                    // Отправляем заказ администраторам
-                    for (const adminId of ADMIN_IDS) {
-                        try {
-                            const adminResponse = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                },
-                                body: JSON.stringify({
-                                    chat_id: adminId,
-                                    text: adminMessage,
-                                    parse_mode: 'HTML',
-                                    reply_markup: {
-                                        inline_keyboard: [[
-                                            { text: '✅ Принять', callback_data: `order_accept_${orderId}` },
-                                            { text: '❌ Отклонить', callback_data: `order_reject_${orderId}` }
-                                        ]]
-                                    }
-                                })
-                            });
-                            
-                            const adminResult = await adminResponse.json();
-                            if (adminResult.ok) {
-                                console.log(`✅ Заказ отправлен администратору ${adminId}`);
-                            } else {
-                                console.error(`❌ Ошибка отправки администратору ${adminId}:`, adminResult);
-                            }
-                        } catch (error) {
-                            console.error(`❌ Ошибка при отправке администратору ${adminId}:`, error);
-                        }
-                    }
-                    
-                    // Отправляем подтверждение пользователю
-                    const customerResponse = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                    // ВАЖНО: Отправляем заказ в чат пользователя как JSON, чтобы бот его обработал и сохранил
+                    // Бот обработает это сообщение через обработчик bot.on('message') и сохранит заказ в orders
+                    const orderJsonResponse = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
                             chat_id: user.id,
-                            text: customerMessage,
-                            parse_mode: 'HTML'
+                            text: JSON.stringify(orderWithId)
                         })
                     });
                     
-                    const customerResult = await customerResponse.json();
-                    if (customerResult.ok) {
-                        console.log('✅ Подтверждение отправлено пользователю');
+                    const orderJsonResult = await orderJsonResponse.json();
+                    if (orderJsonResult.ok) {
+                        console.log('✅ Заказ отправлен в чат пользователя для обработки ботом');
+                        console.log('   Message ID для удаления:', orderJsonResult.result.message_id);
+                        
+                        // Удаляем JSON-сообщение через 1 секунду (после того, как бот его обработает)
+                        setTimeout(async () => {
+                            try {
+                                await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/deleteMessage`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        chat_id: user.id,
+                                        message_id: orderJsonResult.result.message_id
+                                    })
+                                });
+                                console.log('✅ JSON-сообщение удалено');
+                            } catch (error) {
+                                console.error('⚠️ Не удалось удалить JSON-сообщение:', error);
+                            }
+                        }, 2000); // Даем боту 2 секунды на обработку
+                        
                         dataSent = true;
                     } else {
-                        console.error('❌ Ошибка отправки подтверждения пользователю:', customerResult);
+                        console.error('❌ Ошибка отправки заказа в чат пользователя:', orderJsonResult);
                     }
                 } catch (error) {
                     console.error('❌ Ошибка при отправке через Bot API:', error);
