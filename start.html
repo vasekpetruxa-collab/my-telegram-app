@@ -69,20 +69,43 @@
             margin-top: 20px;
             font-size: 14px;
         }
+        
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: transform 0.2s;
+        }
+        
+        .button:hover {
+            transform: scale(1.05);
+        }
+        
+        .button:active {
+            transform: scale(0.95);
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="logo">🍕</div>
         <h1>Гастропаб БУНКЕР</h1>
-        <p>Загрузка...</p>
-        <div class="loading"></div>
+        <p id="status">Загрузка...</p>
+        <div class="loading" id="loading"></div>
         <div class="error" id="error" style="display: none;"></div>
+        <button class="button" id="closeButton" style="display: none;" onclick="closeWebApp()">Закрыть</button>
     </div>
 
     <script>
         // Telegram Web App инициализация
         let tg = null;
+        const BOT_USERNAME = 'bunkerREST_bot';
         
         // Проверка наличия Telegram WebApp API
         if (window.Telegram && window.Telegram.WebApp) {
@@ -90,79 +113,97 @@
             tg.expand();
         }
         
-        // Функция для отправки команды /start боту
-        async function sendStartCommand() {
-            try {
-                // Получаем данные пользователя из Telegram
-                const user = tg?.initDataUnsafe?.user;
-                
-                if (!user || !user.id) {
-                    document.getElementById('error').textContent = 'Не удалось получить данные пользователя';
-                    document.getElementById('error').style.display = 'block';
-                    // Пробуем закрыть Web App и открыть бота
-                    if (tg?.close) {
-                        setTimeout(() => {
-                            tg.close();
-                        }, 2000);
-                    }
-                    return;
-                }
-                
-                // Токен бота (в продакшене используйте переменную окружения)
-                const BOT_TOKEN = '8386902315:AAGSj3gzuEYMO0sDimt2tfLG9zQ6C70tIsc';
-                const BOT_USERNAME = 'bunkerREST_bot';
-                
-                // Отправляем команду /start через Bot API
-                const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        chat_id: user.id,
-                        text: '/start',
-                        parse_mode: 'HTML'
-                    })
-                });
-                
-                const result = await response.json();
-                
-                if (result.ok) {
-                    // Команда отправлена успешно, закрываем Web App
-                    document.querySelector('p').textContent = 'Открываю бота...';
-                    setTimeout(() => {
-                        if (tg?.close) {
-                            tg.close();
-                        } else {
-                            // Если close не работает, открываем бота через ссылку
-                            window.location.href = `https://t.me/${BOT_USERNAME}?start=menu`;
-                        }
-                    }, 1000);
-                } else {
-                    throw new Error(result.description || 'Ошибка отправки команды');
-                }
-            } catch (error) {
-                console.error('Ошибка:', error);
-                document.getElementById('error').textContent = 'Ошибка: ' + error.message;
-                document.getElementById('error').style.display = 'block';
-                document.querySelector('p').textContent = 'Попробуйте открыть бота вручную';
-                
-                // Пробуем открыть бота через ссылку
-                setTimeout(() => {
-                    window.location.href = `https://t.me/bunkerREST_bot?start=menu`;
-                }, 3000);
+        // Функция для закрытия Web App
+        function closeWebApp() {
+            if (tg && typeof tg.close === 'function') {
+                tg.close();
             }
         }
         
-        // Отправляем команду /start при загрузке страницы
-        if (tg) {
-            sendStartCommand();
-        } else {
-            // Если Web App API не доступен, открываем бота напрямую
-            document.querySelector('p').textContent = 'Открываю бота...';
+        // Функция для открытия бота с командой /start
+        async function openBotWithStart() {
+            const statusEl = document.getElementById('status');
+            const loadingEl = document.getElementById('loading');
+            const closeButton = document.getElementById('closeButton');
+            
+            statusEl.textContent = 'Открываю бота...';
+            
+            const botUrl = `https://t.me/${BOT_USERNAME}?start=жми`;
+            const BOT_TOKEN = '8386902315:AAGSj3gzuEYMO0sDimt2tfLG9zQ6C70tIsc';
+            
+            try {
+                // Сначала отправляем команду /жми через Bot API
+                const user = tg?.initDataUnsafe?.user;
+                if (user && user.id) {
+                    console.log('📤 Отправляю команду /жми через Bot API...');
+                    try {
+                        const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                chat_id: user.id,
+                                text: '/жми'
+                            })
+                        });
+                        const result = await response.json();
+                        if (result.ok) {
+                            console.log('✅ Команда /жми отправлена успешно');
+                        } else {
+                            console.warn('⚠️ Ошибка отправки команды:', result);
+                        }
+                    } catch (apiError) {
+                        console.error('❌ Ошибка при отправке команды:', apiError);
+                    }
+                }
+                
+                // Затем открываем бота через Telegram Link
+                if (tg && typeof tg.openTelegramLink === 'function') {
+                    console.log('✅ Открываю бота через openTelegramLink');
+                    tg.openTelegramLink(botUrl);
+                    // Скрываем загрузку и показываем кнопку закрытия
+                    loadingEl.style.display = 'none';
+                    statusEl.textContent = 'Бот открыт! Нажмите "Закрыть" для возврата в чат.';
+                    closeButton.style.display = 'inline-block';
+                    return;
+                }
+                
+                // Альтернативный способ - используем openLink
+                if (tg && typeof tg.openLink === 'function') {
+                    console.log('✅ Открываю бота через openLink');
+                    tg.openLink(botUrl, { try_instant_view: false });
+                    loadingEl.style.display = 'none';
+                    statusEl.textContent = 'Бот открыт! Нажмите "Закрыть" для возврата в чат.';
+                    closeButton.style.display = 'inline-block';
+                    return;
+                }
+                
+                // Если методы не доступны, пробуем открыть бота напрямую
+                console.log('⚠️ Используем прямой переход');
+                window.location.href = botUrl;
+            } catch (error) {
+                console.error('❌ Ошибка при открытии бота:', error);
+                loadingEl.style.display = 'none';
+                document.getElementById('error').textContent = 'Ошибка: ' + error.message;
+                document.getElementById('error').style.display = 'block';
+                statusEl.textContent = 'Попробуйте открыть бота вручную';
+                closeButton.style.display = 'inline-block';
+            }
+        }
+        
+        // Открываем бота с командой /start при загрузке страницы
+        // Небольшая задержка для показа загрузки
+        if (document.readyState === 'complete') {
             setTimeout(() => {
-                window.location.href = 'https://t.me/bunkerREST_bot?start=menu';
-            }, 1000);
+                openBotWithStart();
+            }, 300);
+        } else {
+            window.addEventListener('load', () => {
+                setTimeout(() => {
+                    openBotWithStart();
+                }, 300);
+            });
         }
     </script>
 </body>
