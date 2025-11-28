@@ -10,6 +10,15 @@ if (window.Telegram && window.Telegram.WebApp) {
         tg.MainButton.hide();
         tg.MainButton.onClick(() => {});
     }
+    
+    // Диагностика при загрузке
+    console.log('🔍 Telegram Web App инициализирован:');
+    console.log('   version:', tg.version || 'не указана');
+    console.log('   platform:', tg.platform || 'не указана');
+    console.log('   initData:', tg.initData ? `есть (${tg.initData.length} символов)` : 'нет');
+    console.log('   initDataUnsafe:', tg.initDataUnsafe ? 'есть' : 'нет');
+    console.log('   sendData доступен:', !!tg.sendData);
+    console.log('   Web App открыт через кнопку:', tg.initData && tg.initData.length > 0 ? '✅ ДА' : '❌ НЕТ');
 } else {
     console.warn('Telegram WebApp API не найден. Приложение работает в режиме разработки.');
     // Создаем заглушку для разработки
