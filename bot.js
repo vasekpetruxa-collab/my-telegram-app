@@ -449,14 +449,22 @@ bot.use(async (ctx, next) => {
                 console.log('⚠️ ВАЖНО: Это обновление должно быть обработано обработчиком bot.on(message:web_app_data)');
             } else {
                 console.log('❌ web_app_data НЕ найден в сообщении');
-                console.log('Все ключи message:', Object.keys(ctx.message || {}));
+                console.log('   Все ключи message:', Object.keys(ctx.message || {}));
                 
                 // Проверяем все возможные варианты
                 if (ctx.message?.web_app) {
                     console.log('⚠️ Найден web_app, но не web_app_data');
-                    console.log('web_app:', JSON.stringify(ctx.message.web_app, null, 2));
+                    console.log('   web_app:', JSON.stringify(ctx.message.web_app, null, 2));
                 }
+                
+                // Выводим полную структуру сообщения для диагностики
+                const messageStr = JSON.stringify(ctx.message, null, 2);
+                console.log('   Полная структура message (первые 1000 символов):', messageStr.substring(0, 1000));
             }
+        } else {
+            console.log('⚠️ Обновление не является сообщением, тип:', ctx.updateType);
+            console.log('   Все ключи update:', Object.keys(ctx.update || {}));
+        }
         }
         
         // ВАЖНО: Передаем управление дальше, чтобы обработчики могли обработать обновление
