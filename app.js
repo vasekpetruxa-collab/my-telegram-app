@@ -957,7 +957,7 @@ function gatherOrderData() {
     };
 }
 
-function sendOrderData() {
+async function sendOrderData() {
     try {
         if (state.cart.length === 0) {
             showNotification('Корзина пуста. Добавьте товары в корзину.', 'error');
