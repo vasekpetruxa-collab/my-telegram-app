@@ -414,6 +414,7 @@ bot.use(async (ctx, next) => {
         console.log('Тип обновления:', ctx.updateType);
         console.log('Время:', new Date().toISOString());
         console.log('Update ID:', ctx.update.update_id);
+        console.log('Все ключи update:', Object.keys(ctx.update || {}));
         
         // Если это команда, сразу передаем управление дальше (команды обрабатываются отдельно)
         if (ctx.updateType === 'message' && ctx.message?.text?.startsWith('/')) {
@@ -1242,9 +1243,9 @@ async function startBot() {
         
         // Запускаем polling
         // ВАЖНО: получаем ВСЕ типы обновлений, включая web_app_data
-        // Явно указываем типы обновлений, включая message (который содержит web_app_data)
+        // Используем undefined для получения всех типов обновлений
         bot.startPolling({
-            allowedUpdates: ['message', 'callback_query', 'edited_message'], // Получаем сообщения (включая web_app_data)
+            allowedUpdates: undefined, // Получаем ВСЕ типы обновлений (включая web_app_data)
             dropPendingUpdates: false
         });
         
