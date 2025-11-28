@@ -470,54 +470,93 @@ bot.use(async (ctx, next) => {
 
 // Специальный обработчик ТОЛЬКО для web_app_data (высший приоритет)
 // ВАЖНО: Заказы обрабатываются ТОЛЬКО через web_app_data (кнопка "Открыть меню")
+// tg.sendData() отправляет данные через этот механизм
 bot.on('message:web_app_data', async (ctx) => {
     console.log('\n🎯🎯🎯 СПЕЦИАЛЬНЫЙ ОБРАБОТЧИК ДЛЯ WEB_APP_DATA ВЫЗВАН!');
-    console.log('web_app_data:', ctx.message.web_app_data);
-    console.log('web_app_data.data:', ctx.message.web_app_data.data);
+    console.log('⏰ Время:', new Date().toISOString());
+    console.log('👤 Пользователь:', ctx.from.id, ctx.from.username || 'без username');
+    console.log('📦 web_app_data объект:', JSON.stringify(ctx.message.web_app_data, null, 2));
+    console.log('📦 web_app_data.data:', ctx.message.web_app_data.data);
+    console.log('📦 web_app_data.data тип:', typeof ctx.message.web_app_data.data);
+    console.log('📦 web_app_data.data длина:', ctx.message.web_app_data.data?.length);
     
     try {
+        // Парсим данные заказа
         const orderData = JSON.parse(ctx.message.web_app_data.data);
-        console.log('✅ Данные успешно распарсены:', orderData);
+        console.log('✅ Данные успешно распарсены из JSON');
+        console.log('📋 Структура заказа:');
+        console.log('   items:', orderData.items?.length || 0, 'позиций');
+        console.log('   total:', orderData.total);
+        console.log('   recipientName:', orderData.recipientName);
+        console.log('   phone:', orderData.phone);
+        console.log('   deliveryType:', orderData.deliveryType);
         
         // Добавляем статус и ID заказа
+        // ВАЖНО: Используем orderId из данных, если он есть (для совместимости)
         const order = {
             ...orderData,
-            orderId: `ORD-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
-            status: 'new',
-            createdAt: new Date().toISOString(),
-            user: ctx.from // Сохраняем информацию о пользователе
+            orderId: orderData.orderId || `ORD-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+            status: orderData.status || 'new',
+            createdAt: orderData.createdAt || new Date().toISOString(),
+            user: ctx.from // Сохраняем информацию о пользователе (перезаписываем, если было в orderData)
         };
+        
+        console.log('🔍 Проверка данных заказа после обработки:');
+        console.log('   orderId:', order.orderId);
+        console.log('   status:', order.status);
+        console.log('   user.id:', order.user?.id);
+        console.log('   user.username:', order.user?.username);
         
         // Сохраняем заказ
         orders.push(order);
         console.log('💾 Заказ сохранен в массив orders');
         console.log('📊 Всего заказов в системе:', orders.length);
+        console.log('📋 Последний заказ:', {
+            orderId: order.orderId,
+            total: order.total,
+            recipientName: order.recipientName,
+            phone: order.phone,
+            userId: order.user?.id
+        });
         
         // Формируем сообщение для пользователя
         const orderMessage = formatOrderMessage(order, true);
         
         // Отправляем подтверждение пользователю
+        console.log('📤 Отправка подтверждения пользователю...');
         const customerMsg = await ctx.reply(orderMessage, {
             parse_mode: 'HTML',
             reply_markup: getMainKeyboard()
         });
         console.log('✅ Подтверждение отправлено пользователю');
         console.log('   Message ID:', customerMsg.message_id);
+        console.log('   Chat ID:', customerMsg.chat.id);
         
         // Сохраняем message_id для заказчика
         orderMessages.set(order.orderId, {
             customerMessageId: customerMsg.message_id,
             customerChatId: ctx.from.id
         });
+        console.log('💾 message_id сохранен для заказчика');
         
         // Уведомляем администраторов
+        console.log('📤 Отправка уведомлений администраторам...');
         await notifyAdmins(ctx, order);
         console.log('✅ Уведомления администраторам отправлены');
+        console.log('🎯🎯🎯 ОБРАБОТКА WEB_APP_DATA ЗАВЕРШЕНА УСПЕШНО!');
         
     } catch (error) {
-        console.error('❌ Ошибка обработки данных из Web App:', error);
-        console.error('Stack trace:', error.stack);
-        await ctx.reply('❌ Произошла ошибка при обработке заказа. Пожалуйста, попробуйте еще раз.');
+        console.error('❌ ОШИБКА обработки данных из Web App:');
+        console.error('   Тип ошибки:', error.name);
+        console.error('   Сообщение:', error.message);
+        console.error('   Stack trace:', error.stack);
+        console.error('   Данные, которые вызвали ошибку:', ctx.message.web_app_data.data);
+        
+        try {
+            await ctx.reply('❌ Произошла ошибка при обработке заказа. Пожалуйста, попробуйте еще раз.');
+        } catch (replyError) {
+            console.error('❌ Ошибка при отправке сообщения об ошибке:', replyError);
+        }
     }
 });
 

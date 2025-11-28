@@ -957,108 +957,6 @@ function gatherOrderData() {
     };
 }
 
-// Форматирование сообщения о заказе для администратора
-function formatAdminOrderMessage(order) {
-    const deliveryTypeText = order.deliveryType === 'pickup' ? 'Самовывоз' : 'Доставка';
-    const paymentMethodText = order.paymentMethod === 'cod' ? 'При получении' : 'Онлайн';
-    
-    const statusEmoji = {
-        'new': '🆕',
-        'accepted': '✅',
-        'cooking': '👨‍🍳',
-        'delivering': '🚚',
-        'completed': '🎉',
-        'cancelled': '❌'
-    };
-    
-    const statusText = {
-        'new': 'Новый',
-        'accepted': 'Принят',
-        'cooking': 'Готовится',
-        'delivering': 'Доставляется',
-        'completed': 'Завершен',
-        'cancelled': 'Отменен'
-    };
-    
-    let message = `
-🔔 <b>Новый заказ!</b>
-
-📋 Номер: <code>${order.orderId}</code>
-📊 Статус: ${statusEmoji[order.status] || '❓'} ${statusText[order.status] || order.status}
-👤 Клиент: ${order.recipientName}
-📞 Телефон: ${order.phone}
-🚚 Тип: ${deliveryTypeText}
-💳 Оплата: ${paymentMethodText}
-    `;
-    
-    if (order.deliveryType === 'delivery' && order.address) {
-        message += `📍 Адрес: ${order.address}\n`;
-        if (order.addressDetails?.apartment) {
-            message += `   Квартира: ${order.addressDetails.apartment}\n`;
-        }
-        if (order.addressDetails?.comment) {
-            message += `   Комментарий: ${order.addressDetails.comment}\n`;
-        }
-    }
-    
-    message += `\n🛒 <b>Состав заказа:</b>\n`;
-    order.items.forEach(item => {
-        message += `   • ${item.name} × ${item.quantity} = ${item.price * item.quantity} ₽\n`;
-    });
-    
-    if (order.cutlery > 0) {
-        message += `   • Приборы: ${order.cutlery} шт.\n`;
-    }
-    
-    message += `\n💰 <b>Итого: ${order.total} ₽</b>`;
-    
-    return message;
-}
-
-// Форматирование сообщения о заказе для клиента
-function formatCustomerOrderMessage(order) {
-    const deliveryTypeText = order.deliveryType === 'pickup' ? 'Самовывоз' : 'Доставка';
-    const paymentMethodText = order.paymentMethod === 'cod' ? 'При получении' : 'Онлайн';
-    
-    let message = `
-✅ <b>Заказ принят!</b>
-
-📋 Номер заказа: <code>${order.orderId}</code>
-👤 Получатель: ${order.recipientName}
-📞 Телефон: ${order.phone}
-🚚 Тип доставки: ${deliveryTypeText}
-💳 Способ оплаты: ${paymentMethodText}
-    `;
-    
-    if (order.deliveryType === 'delivery' && order.address) {
-        message += `📍 Адрес: ${order.address}\n`;
-        if (order.addressDetails?.apartment) {
-            message += `   Квартира: ${order.addressDetails.apartment}\n`;
-        }
-        if (order.addressDetails?.comment) {
-            message += `   Комментарий: ${order.addressDetails.comment}\n`;
-        }
-    }
-    
-    message += `\n🛒 <b>Состав заказа:</b>\n`;
-    order.items.forEach(item => {
-        message += `   • ${item.name} × ${item.quantity} = ${item.price * item.quantity} ₽\n`;
-    });
-    
-    if (order.cutlery > 0) {
-        message += `   • Приборы: ${order.cutlery} шт.\n`;
-    }
-    
-    message += `\n💰 <b>Итого: ${order.total} ₽</b>\n`;
-    
-    if (order.deliveryType === 'pickup') {
-        message += `\n📍 Забрать заказ можно по адресу:\nг. Шахты, ул. Советская, дом 235 «Бункер»`;
-    }
-    
-    message += `\n\n⏰ Мы свяжемся с вами в ближайшее время!`;
-    
-    return message;
-}
 
 async function sendOrderData() {
     try {
@@ -1080,135 +978,47 @@ async function sendOrderData() {
         console.log('window.Telegram.WebApp существует?', !!window.Telegram?.WebApp);
         console.log('Режим работы:', window.Telegram?.WebApp ? 'Telegram Web App' : 'Обычный браузер');
         
-        // Пробуем отправить данные через sendData
-        let dataSent = false;
-        let sendDataCalled = false;
-        
-        if (tg?.sendData) {
-            console.log('✅ Вызываю tg.sendData с данными:', JSON.stringify(orderData));
-            try {
-                tg.sendData(JSON.stringify(orderData));
-                console.log('✅ tg.sendData вызван успешно');
-                sendDataCalled = true;
-                // НЕ устанавливаем dataSent = true, так как мы не знаем, дошли ли данные до бота
-                // Используем альтернативный способ как резервный
-            } catch (error) {
-                console.error('❌ Ошибка при вызове tg.sendData:', error);
-            }
-        } else {
-            console.warn('⚠️ tg.sendData не доступен');
+        // Отправляем данные ТОЛЬКО через tg.sendData() (стандартный механизм Telegram Web App)
+        // ВАЖНО: tg.sendData() работает только когда Web App открыт через кнопку с web_app
+        if (!tg?.sendData) {
+            console.error('❌ КРИТИЧЕСКАЯ ОШИБКА: tg.sendData() не доступен!');
             if (!window.Telegram?.WebApp) {
-                console.error('❌ КРИТИЧЕСКАЯ ОШИБКА: Приложение открыто в обычном браузере!');
+                console.error('❌ Приложение открыто в обычном браузере!');
                 console.error('❌ tg.sendData() работает ТОЛЬКО в Telegram Web App!');
                 console.error('💡 РЕШЕНИЕ: Откройте приложение через Telegram бота:');
                 console.error('   1. Откройте бота @bunkerREST_bot в Telegram');
                 console.error('   2. Нажмите Menu Button (внизу экрана) или отправьте /menu');
-                console.error('   3. Оформите заказ');
+                console.error('   3. Нажмите кнопку "Открыть меню"');
+                console.error('   4. Оформите заказ');
+            } else {
+                console.error('⚠️ Web App открыт, но tg.sendData() недоступен');
+                console.error('⚠️ Возможные причины:');
+                console.error('   1. Web App открыт не через кнопку с web_app');
+                console.error('   2. Проблема с Telegram Web App API');
             }
+            showNotification('Ошибка: приложение должно быть открыто через Telegram бота', 'error');
+            return;
         }
         
-        // Альтернативный способ: отправка через Telegram Bot API напрямую
-        // Используем его ВСЕГДА как резервный способ, даже если sendData был вызван
-        // Это гарантирует, что данные точно дойдут до бота
-        if (window.Telegram?.WebApp) {
-            if (sendDataCalled) {
-                console.log('🔄 sendData был вызван, но используем альтернативный способ для гарантии доставки...');
-            } else {
-                console.log('🔄 sendData не сработал, пробуем альтернативный способ через Bot API...');
-            }
+        console.log('📤 Отправка заказа через tg.sendData()...');
+        console.log('   Данные заказа:', JSON.stringify(orderData, null, 2));
+        
+        try {
+            // Отправляем данные через стандартный механизм Telegram Web App
+            tg.sendData(JSON.stringify(orderData));
+            console.log('✅ tg.sendData() вызван успешно');
+            console.log('✅ Заказ отправлен в бот через web_app_data');
+            console.log('💡 Бот должен обработать заказ через обработчик message:web_app_data');
             
-            // Получаем данные пользователя из Telegram
-            const user = tg?.initDataUnsafe?.user;
-            if (user && user.id) {
-                console.log('📤 Отправка данных через Bot API напрямую...');
-                console.log('   User ID:', user.id);
-                
-                // Используем Bot API для отправки данных
-                // ВАЖНО: Токен бота должен быть в переменной окружения или в коде (только для тестирования!)
-                const BOT_TOKEN = '8386902315:AAGSj3gzuEYMO0sDimt2tfLG9zQ6C70tIsc'; // ВНИМАНИЕ: В продакшене используйте переменную окружения!
-                const ADMIN_IDS = [540298072]; // ID администраторов
-                
-                // Генерируем ID заказа
-                const orderId = `ORD-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
-                const orderWithId = {
-                    ...orderData,
-                    orderId: orderId,
-                    status: 'new',
-                    createdAt: new Date().toISOString()
-                };
-                
-                // Форматируем сообщение для администратора
-                const adminMessage = formatAdminOrderMessage(orderWithId);
-                
-                // Форматируем сообщение для пользователя
-                const customerMessage = formatCustomerOrderMessage(orderWithId);
-                
-                try {
-                    // ВАЖНО: Отправляем заказ в чат пользователя как JSON, чтобы бот его обработал и сохранил
-                    // Бот обработает это сообщение через обработчик bot.on('message') и сохранит заказ в orders
-                    const orderJsonResponse = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            chat_id: user.id,
-                            text: JSON.stringify(orderWithId)
-                        })
-                    });
-                    
-                    const orderJsonResult = await orderJsonResponse.json();
-                    if (orderJsonResult.ok) {
-                        console.log('✅ Заказ отправлен в чат пользователя для обработки ботом');
-                        console.log('   Message ID для удаления:', orderJsonResult.result.message_id);
-                        
-                        // Удаляем JSON-сообщение через 1 секунду (после того, как бот его обработает)
-                        setTimeout(async () => {
-                            try {
-                                await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/deleteMessage`, {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json'
-                                    },
-                                    body: JSON.stringify({
-                                        chat_id: user.id,
-                                        message_id: orderJsonResult.result.message_id
-                                    })
-                                });
-                                console.log('✅ JSON-сообщение удалено');
-                            } catch (error) {
-                                console.error('⚠️ Не удалось удалить JSON-сообщение:', error);
-                            }
-                        }, 2000); // Даем боту 2 секунды на обработку
-                        
-                        dataSent = true;
-                    } else {
-                        console.error('❌ Ошибка отправки заказа в чат пользователя:', orderJsonResult);
-                    }
-                } catch (error) {
-                    console.error('❌ Ошибка при отправке через Bot API:', error);
-                    console.error('   Детали:', error.message);
-                }
-            } else {
-                console.warn('⚠️ Не удалось получить ID пользователя для альтернативной отправки');
-                console.warn('   tg?.initDataUnsafe?.user:', tg?.initDataUnsafe?.user);
-            }
+            // Показываем уведомление об успешной отправке
+            showNotification('Заказ отправлен! Ожидайте подтверждения от бота.', 'success');
+        } catch (error) {
+            console.error('❌ Ошибка при вызове tg.sendData():', error);
+            console.error('   Детали:', error.message);
+            showNotification('Ошибка при отправке заказа. Попробуйте еще раз.', 'error');
         }
         
-        if (!dataSent && !sendDataCalled) {
-            console.log('⚠️ ВНИМАНИЕ: sendData() не работает!');
-            console.log('⚠️ Возможные причины:');
-            console.log('   1. Menu Button не настроен в BotFather');
-            console.log('   2. Приложение открыто не через Telegram');
-            console.log('   3. Проблема с Telegram Web App API');
-            console.log('');
-            console.log('💡 РЕШЕНИЕ: Настройте Menu Button в BotFather!');
-            console.log('   BotFather → /mybots → Ваш бот → Bot Settings → Menu Button');
-            console.log('   URL:', window.location.href);
-        }
-        
-        // Показываем уведомление об успешной отправке заказа
-        showNotification(`Заказ отправлен! Сумма: ${orderData.total} ₽`, 'success');
+        // Уведомление показывается в блоке try выше
         
         // Метод showPopup не поддерживается в версии 6.0+ Telegram WebApp
         // Используем только showNotification для уведомлений
