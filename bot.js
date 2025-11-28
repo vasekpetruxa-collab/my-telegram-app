@@ -678,13 +678,45 @@ bot.on('message', async (ctx) => {
         return; // Команды обрабатываются bot.command()
     }
     
-    // ВАЖНО: Пропускаем web_app_data - обрабатывается в bot.on('message:web_app_data')
-    // Если мы здесь, значит bot.on('message:web_app_data') не сработал
+    // ВАЖНО: Обрабатываем web_app_data здесь как fallback, если bot.on('message:web_app_data') не сработал
     if (ctx.message?.web_app_data?.data) {
-        console.log('⚠️ ВНИМАНИЕ: web_app_data найден, но bot.on(message:web_app_data) не сработал!');
-        console.log('⚠️ Это означает, что обработчик не зарегистрирован или не работает');
-        console.log('⚠️ Попробуем обработать здесь как fallback...');
-        // НЕ возвращаемся, обрабатываем как fallback
+        console.log('⚠️ ВНИМАНИЕ: web_app_data найден в bot.on(message)!');
+        console.log('⚠️ Это означает, что bot.on(message:web_app_data) не сработал');
+        console.log('⚠️ Обрабатываем как fallback...');
+        
+        try {
+            const orderData = JSON.parse(ctx.message.web_app_data.data);
+            console.log('✅ Данные успешно распарсены из web_app_data (fallback)');
+            
+            const order = {
+                ...orderData,
+                orderId: orderData.orderId || `ORD-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+                status: orderData.status || 'new',
+                createdAt: orderData.createdAt || new Date().toISOString(),
+                user: ctx.from
+            };
+            
+            orders.push(order);
+            console.log('💾 Заказ сохранен в массив orders (fallback)');
+            console.log('📊 Всего заказов в системе:', orders.length);
+            
+            const orderMessage = formatOrderMessage(order, true);
+            const customerMsg = await ctx.reply(orderMessage, {
+                parse_mode: 'HTML',
+                reply_markup: getMainKeyboard()
+            });
+            
+            orderMessages.set(order.orderId, {
+                customerMessageId: customerMsg.message_id,
+                customerChatId: ctx.from.id
+            });
+            
+            await notifyAdmins(ctx, order);
+            console.log('✅ Заказ обработан через fallback обработчик');
+            return; // Заказ обработан, выходим
+        } catch (error) {
+            console.error('❌ Ошибка обработки web_app_data в fallback:', error);
+        }
     }
     
     // Логируем остальные сообщения для отладки
