@@ -957,6 +957,109 @@ function gatherOrderData() {
     };
 }
 
+// Форматирование сообщения о заказе для администратора
+function formatAdminOrderMessage(order) {
+    const deliveryTypeText = order.deliveryType === 'pickup' ? 'Самовывоз' : 'Доставка';
+    const paymentMethodText = order.paymentMethod === 'cod' ? 'При получении' : 'Онлайн';
+    
+    const statusEmoji = {
+        'new': '🆕',
+        'accepted': '✅',
+        'cooking': '👨‍🍳',
+        'delivering': '🚚',
+        'completed': '🎉',
+        'cancelled': '❌'
+    };
+    
+    const statusText = {
+        'new': 'Новый',
+        'accepted': 'Принят',
+        'cooking': 'Готовится',
+        'delivering': 'Доставляется',
+        'completed': 'Завершен',
+        'cancelled': 'Отменен'
+    };
+    
+    let message = `
+🔔 <b>Новый заказ!</b>
+
+📋 Номер: <code>${order.orderId}</code>
+📊 Статус: ${statusEmoji[order.status] || '❓'} ${statusText[order.status] || order.status}
+👤 Клиент: ${order.recipientName}
+📞 Телефон: ${order.phone}
+🚚 Тип: ${deliveryTypeText}
+💳 Оплата: ${paymentMethodText}
+    `;
+    
+    if (order.deliveryType === 'delivery' && order.address) {
+        message += `📍 Адрес: ${order.address}\n`;
+        if (order.addressDetails?.apartment) {
+            message += `   Квартира: ${order.addressDetails.apartment}\n`;
+        }
+        if (order.addressDetails?.comment) {
+            message += `   Комментарий: ${order.addressDetails.comment}\n`;
+        }
+    }
+    
+    message += `\n🛒 <b>Состав заказа:</b>\n`;
+    order.items.forEach(item => {
+        message += `   • ${item.name} × ${item.quantity} = ${item.price * item.quantity} ₽\n`;
+    });
+    
+    if (order.cutlery > 0) {
+        message += `   • Приборы: ${order.cutlery} шт.\n`;
+    }
+    
+    message += `\n💰 <b>Итого: ${order.total} ₽</b>`;
+    
+    return message;
+}
+
+// Форматирование сообщения о заказе для клиента
+function formatCustomerOrderMessage(order) {
+    const deliveryTypeText = order.deliveryType === 'pickup' ? 'Самовывоз' : 'Доставка';
+    const paymentMethodText = order.paymentMethod === 'cod' ? 'При получении' : 'Онлайн';
+    
+    let message = `
+✅ <b>Заказ принят!</b>
+
+📋 Номер заказа: <code>${order.orderId}</code>
+👤 Получатель: ${order.recipientName}
+📞 Телефон: ${order.phone}
+🚚 Тип доставки: ${deliveryTypeText}
+💳 Способ оплаты: ${paymentMethodText}
+    `;
+    
+    if (order.deliveryType === 'delivery' && order.address) {
+        message += `📍 Адрес: ${order.address}\n`;
+        if (order.addressDetails?.apartment) {
+            message += `   Квартира: ${order.addressDetails.apartment}\n`;
+        }
+        if (order.addressDetails?.comment) {
+            message += `   Комментарий: ${order.addressDetails.comment}\n`;
+        }
+    }
+    
+    message += `\n🛒 <b>Состав заказа:</b>\n`;
+    order.items.forEach(item => {
+        message += `   • ${item.name} × ${item.quantity} = ${item.price * item.quantity} ₽\n`;
+    });
+    
+    if (order.cutlery > 0) {
+        message += `   • Приборы: ${order.cutlery} шт.\n`;
+    }
+    
+    message += `\n💰 <b>Итого: ${order.total} ₽</b>\n`;
+    
+    if (order.deliveryType === 'pickup') {
+        message += `\n📍 Забрать заказ можно по адресу:\nг. Шахты, ул. Советская, дом 235 «Бункер»`;
+    }
+    
+    message += `\n\n⏰ Мы свяжемся с вами в ближайшее время!`;
+    
+    return message;
+}
+
 async function sendOrderData() {
     try {
         if (state.cart.length === 0) {
@@ -1023,30 +1126,75 @@ async function sendOrderData() {
                 // Используем Bot API для отправки данных
                 // ВАЖНО: Токен бота должен быть в переменной окружения или в коде (только для тестирования!)
                 const BOT_TOKEN = '8386902315:AAGSj3gzuEYMO0sDimt2tfLG9zQ6C70tIsc'; // ВНИМАНИЕ: В продакшене используйте переменную окружения!
+                const ADMIN_IDS = [540298072]; // ID администраторов
+                
+                // Генерируем ID заказа
+                const orderId = `ORD-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+                const orderWithId = {
+                    ...orderData,
+                    orderId: orderId,
+                    status: 'new',
+                    createdAt: new Date().toISOString()
+                };
+                
+                // Форматируем сообщение для администратора
+                const adminMessage = formatAdminOrderMessage(orderWithId);
+                
+                // Форматируем сообщение для пользователя
+                const customerMessage = formatCustomerOrderMessage(orderWithId);
                 
                 try {
-                    // Отправляем данные как текстовое сообщение в формате JSON
-                    const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                    // Отправляем заказ администраторам
+                    for (const adminId of ADMIN_IDS) {
+                        try {
+                            const adminResponse = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    chat_id: adminId,
+                                    text: adminMessage,
+                                    parse_mode: 'HTML',
+                                    reply_markup: {
+                                        inline_keyboard: [[
+                                            { text: '✅ Принять', callback_data: `order_accept_${orderId}` },
+                                            { text: '❌ Отклонить', callback_data: `order_reject_${orderId}` }
+                                        ]]
+                                    }
+                                })
+                            });
+                            
+                            const adminResult = await adminResponse.json();
+                            if (adminResult.ok) {
+                                console.log(`✅ Заказ отправлен администратору ${adminId}`);
+                            } else {
+                                console.error(`❌ Ошибка отправки администратору ${adminId}:`, adminResult);
+                            }
+                        } catch (error) {
+                            console.error(`❌ Ошибка при отправке администратору ${adminId}:`, error);
+                        }
+                    }
+                    
+                    // Отправляем подтверждение пользователю
+                    const customerResponse = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
                             chat_id: user.id,
-                            text: JSON.stringify(orderData),
+                            text: customerMessage,
                             parse_mode: 'HTML'
                         })
                     });
                     
-                    const result = await response.json();
-                    if (result.ok) {
-                        console.log('✅ Данные успешно отправлены через Bot API!');
-                        console.log('   Результат:', result);
+                    const customerResult = await customerResponse.json();
+                    if (customerResult.ok) {
+                        console.log('✅ Подтверждение отправлено пользователю');
                         dataSent = true;
                     } else {
-                        console.error('❌ Ошибка отправки через Bot API:', result);
-                        console.error('   Код ошибки:', result.error_code);
-                        console.error('   Описание:', result.description);
+                        console.error('❌ Ошибка отправки подтверждения пользователю:', customerResult);
                     }
                 } catch (error) {
                     console.error('❌ Ошибка при отправке через Bot API:', error);
