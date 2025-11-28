@@ -56,10 +56,13 @@ function getMainKeyboard() {
 // ============================================
 
 // Команда /start - приветствие и показ панели бота
-bot.start(async (ctx) => {
+// Также обрабатываем команду /жми как алиас для /start
+const startCommandHandler = async (ctx) => {
     try {
-        console.log('\n📋 === ОБРАБОТКА КОМАНДЫ /start ===');
-        console.log('✅ Команда /start получена от пользователя:', ctx.from.id, ctx.from.username || 'без username');
+        const commandName = ctx.message?.text?.startsWith('/жми') ? '/жми' : '/start';
+        console.log(`\n📋 === ОБРАБОТКА КОМАНДЫ ${commandName} ===`);
+        console.log(`✅ Команда ${commandName} получена от пользователя:`, ctx.from.id, ctx.from.username || 'без username');
+        console.log('Start payload:', ctx.startPayload || 'нет параметра');
         console.log('WEB_APP_URL из .env:', process.env.WEB_APP_URL);
         
         const webAppUrl = process.env.WEB_APP_URL || 'https://your-domain.com';
@@ -82,8 +85,8 @@ bot.start(async (ctx) => {
         await ctx.reply(welcomeMessage, {
             reply_markup: getMainKeyboard()
         });
-        console.log('✅ Ответ на /start отправлен успешно');
-        console.log('📋 === КОМАНДА /start ОБРАБОТАНА ===\n');
+        console.log(`✅ Ответ на ${commandName} отправлен успешно`);
+        console.log(`📋 === КОМАНДА ${commandName} ОБРАБОТАНА ===\n`);
     } catch (error) {
         console.error('❌ ОШИБКА при обработке команды /start:', error);
         console.error('Детали ошибки:', error.message);
@@ -94,7 +97,13 @@ bot.start(async (ctx) => {
             console.error('❌ Ошибка при отправке сообщения об ошибке:', replyError);
         }
     }
-});
+};
+
+// Регистрируем обработчик для команды /start
+bot.start(startCommandHandler);
+
+// Регистрируем команду /жми как алиас для /start
+bot.command('жми', startCommandHandler);
 
 // Команда /menu - открыть Web App с меню ресторана
 bot.command('menu', async (ctx) => {
@@ -634,6 +643,7 @@ bot.on('message', async (ctx) => {
     console.log('Тип сообщения:', ctx.message?.text ? 'text' : 'other');
     console.log('Текст сообщения:', ctx.message?.text || 'нет текста');
     console.log('Ключи объекта message:', Object.keys(ctx.message || {}));
+    const fullMessage = JSON.stringify(ctx.message || {}, null, 2);
     console.log('Полное сообщение (первые 500 символов):', fullMessage.substring(0, 500));
     
     // Проверяем данные от Web App в разных возможных форматах
@@ -650,13 +660,21 @@ bot.on('message', async (ctx) => {
         console.log('✅ Данные найдены в формате: web_app.data');
     }
     // Вариант 3: текст сообщения содержит JSON (если данные пришли как текст)
-    else if (ctx.message?.text && ctx.message.text.startsWith('{')) {
-        try {
-            JSON.parse(ctx.message.text);
-            webAppData = ctx.message.text;
-            console.log('✅ Данные найдены в формате: text (JSON)');
-        } catch (e) {
-            // Не JSON
+    else if (ctx.message?.text) {
+        const trimmedText = ctx.message.text.trim();
+        if (trimmedText.startsWith('{') && trimmedText.endsWith('}')) {
+            try {
+                // Пробуем распарсить JSON
+                const parsed = JSON.parse(trimmedText);
+                // Проверяем, что это похоже на заказ (есть поля items, total и т.д.)
+                if (parsed.items && Array.isArray(parsed.items) && parsed.total !== undefined) {
+                    webAppData = trimmedText;
+                    console.log('✅ Данные найдены в формате: text (JSON заказа)');
+                }
+            } catch (e) {
+                // Не валидный JSON или не заказ
+                console.log('⚠️ Текст похож на JSON, но не является заказом или невалидный:', e.message);
+            }
         }
     }
     
@@ -679,7 +697,8 @@ bot.on('message', async (ctx) => {
             ...orderData,
             orderId: `ORD-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
             status: 'new',
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
+            user: ctx.from // Сохраняем информацию о пользователе
         };
         
         // Сохраняем заказ
@@ -690,18 +709,27 @@ bot.on('message', async (ctx) => {
             orderId: order.orderId,
             total: order.total,
             recipientName: order.recipientName,
-            phone: order.phone
+            phone: order.phone,
+            userId: order.user?.id
         });
         
         // Формируем сообщение для пользователя
-        const orderMessage = formatOrderMessage(order);
+        const orderMessage = formatOrderMessage(order, true);
         
         // Отправляем подтверждение пользователю
         console.log('📤 Отправка подтверждения пользователю...');
-        await ctx.reply(orderMessage, {
-            parse_mode: 'HTML'
+        const customerMsg = await ctx.reply(orderMessage, {
+            parse_mode: 'HTML',
+            reply_markup: getMainKeyboard()
         });
         console.log('✅ Подтверждение отправлено пользователю');
+        console.log('   Message ID:', customerMsg.message_id);
+        
+        // Сохраняем message_id для заказчика
+        orderMessages.set(order.orderId, {
+            customerMessageId: customerMsg.message_id,
+            customerChatId: ctx.from.id
+        });
         
         // Уведомляем администраторов
         console.log('📤 Вызов функции notifyAdmins...');
