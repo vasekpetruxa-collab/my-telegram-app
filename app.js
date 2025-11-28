@@ -1002,19 +1002,53 @@ async function sendOrderData() {
         
         console.log('📤 Отправка заказа через tg.sendData()...');
         console.log('   Данные заказа:', JSON.stringify(orderData, null, 2));
+        console.log('   Размер данных:', JSON.stringify(orderData).length, 'символов');
+        
+        // ВАЖНО: Проверяем, что Web App открыт правильно
+        console.log('🔍 Диагностика Web App:');
+        console.log('   tg.version:', tg?.version || 'не указана');
+        console.log('   tg.platform:', tg?.platform || 'не указана');
+        console.log('   tg.initData:', tg?.initData ? 'есть' : 'нет');
+        console.log('   tg.initDataUnsafe:', tg?.initDataUnsafe ? 'есть' : 'нет');
+        console.log('   tg.initDataUnsafe.user:', tg?.initDataUnsafe?.user || 'нет');
+        
+        // Проверяем, открыт ли Web App через кнопку с web_app
+        const isOpenedViaWebApp = tg?.initData && tg?.initData.length > 0;
+        console.log('   Web App открыт через кнопку:', isOpenedViaWebApp ? '✅ ДА' : '❌ НЕТ');
+        
+        if (!isOpenedViaWebApp) {
+            console.error('❌ КРИТИЧЕСКАЯ ПРОБЛЕМА: Web App открыт не через кнопку с web_app!');
+            console.error('❌ tg.sendData() работает ТОЛЬКО когда Web App открыт через кнопку!');
+            console.error('💡 РЕШЕНИЕ:');
+            console.error('   1. Закройте Web App');
+            console.error('   2. Откройте бота @bunkerREST_bot в Telegram');
+            console.error('   3. Нажмите кнопку "🍕 Меню" в Reply Keyboard');
+            console.error('   4. Нажмите кнопку "Открыть меню" (Inline Button с web_app)');
+            console.error('   5. Оформите заказ');
+            showNotification('Ошибка: откройте меню через кнопку в боте', 'error');
+            return;
+        }
         
         try {
             // Отправляем данные через стандартный механизм Telegram Web App
-            tg.sendData(JSON.stringify(orderData));
+            const dataString = JSON.stringify(orderData);
+            console.log('📤 Вызываю tg.sendData() с данными длиной:', dataString.length, 'символов');
+            console.log('   Первые 200 символов:', dataString.substring(0, 200));
+            
+            tg.sendData(dataString);
+            
             console.log('✅ tg.sendData() вызван успешно');
             console.log('✅ Заказ отправлен в бот через web_app_data');
             console.log('💡 Бот должен обработать заказ через обработчик message:web_app_data');
+            console.log('⏰ Ожидаем обновление в боте...');
             
             // Показываем уведомление об успешной отправке
             showNotification('Заказ отправлен! Ожидайте подтверждения от бота.', 'success');
         } catch (error) {
             console.error('❌ Ошибка при вызове tg.sendData():', error);
-            console.error('   Детали:', error.message);
+            console.error('   Тип ошибки:', error.name);
+            console.error('   Сообщение:', error.message);
+            console.error('   Stack:', error.stack);
             showNotification('Ошибка при отправке заказа. Попробуйте еще раз.', 'error');
         }
         
